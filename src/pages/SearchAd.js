@@ -55,7 +55,7 @@ function SearchAd() {
         setError(null);
         setResults([]);
         try {
-            const resp = await fetch(`http://127.0.0.1:5000/search?q=${encodeURIComponent(q)}&country=${c}&ad_type=${a}`);
+            const resp = await fetch(`https://brand-agent-server.up.railway.app/search?q=${encodeURIComponent(q)}&country=${c}&ad_type=${a}`);
             if (!resp.ok) throw new Error('API error');
             const data = await resp.json();
             const pageResults = data?.results?.data?.ad_library_main?.typeahead_suggestions?.page_results || [];
@@ -71,7 +71,7 @@ function SearchAd() {
         setSelectedAdvertiser(brand);
         setSelectedAdBodiesData({ loading: true, error: null, data: null });
         try {
-            const resp = await fetch(`http://127.0.0.1:5000/page?page_id=${encodeURIComponent(pageId)}&ad_type=${adType}&country=${country}&brand=${brand}`);
+            const resp = await fetch(`https://brand-agent-server.up.railway.app/page?page_id=${encodeURIComponent(pageId)}&ad_type=${adType}&country=${country}&brand=${brand}`);
             if (!resp.ok) throw new Error('API error');
             const data = await resp.json();
             setSelectedAdBodiesData({ loading: false, error: null, data: data.ad_bodies });
@@ -115,7 +115,7 @@ function SearchAd() {
         setGenerateLoading(true);
         setGenerateResult(null);
         try {
-            const resp = await fetch('http://127.0.0.1:5000/brand', {
+            const resp = await fetch('https://brand-agent-server.up.railway.app/brand', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
