@@ -1,0 +1,15 @@
+.experiences-container {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .experiences-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+  }
+.experiences-content{
+    padding: 20px;
+}

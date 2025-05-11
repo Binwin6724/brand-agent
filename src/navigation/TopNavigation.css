@@ -1,0 +1,94 @@
+.top-nav-root {
+  width: 100%;
+  height: 46px;
+  background: #18191b;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 190;
+}
+
+.top-nav-left {
+  display: flex;
+  align-items: center;
+}
+
+.top-nav-menu-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin: 20px;
+}
+
+.top-nav-logo {
+  width: 24px;
+  margin-bottom: 2px;
+}
+
+.top-nav-title {
+  font-size: .75rem;
+  font-weight: 400;
+  margin: 5px;
+  color: #fff;
+}
+
+.top-nav-staging {
+  background: #DA9F00;
+  color: #23272e;
+  font-size: 0.65em;
+  font-weight: 200;
+  border-radius: 4px;
+  padding: 2px 9px;
+  margin-top: 2px;
+  margin-left: 20px;
+}
+
+.top-nav-override {
+  background: #DF3422;
+  color: #fff;
+  font-size: 0.65em;
+  font-weight: 200;
+  border-radius: 4px;
+  padding:2px 9px;
+  margin-top: 2px;
+  margin-left: 10px;
+}
+
+
+.top-nav-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 16;
+}
+
+
+
+.top-nav-user {
+  font-size: .7em;
+  color: #ffffff;
+  font-weight: 200;
+  margin: 5px;
+}
+
+.top-nav-avatar svg {
+  border-radius: 50%;
+  background: #ffffff;
+  margin: 5px;
+}
+
+
+.divider {
+  width: 1.4px;
+  border-radius: 10px;
+  height: 24px; /* or any height you want */
+  background-color: rgb(121, 121, 121);
+  margin: 0 8px; /* optional: adds space around the divider */
+}
+
+.chat-icon-top, .notification-icon-top, .application-icon-top {
+  color: #fff;
+  margin: 5px;
+}
