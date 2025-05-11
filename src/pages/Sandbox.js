@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Form, Button, Card, Alert, Spinner, Container, Row, Col } from 'react-bootstrap';
-import ReactMarkdown from 'react-markdown';
 
 function Sandbox() {
   const [formData, setFormData] = useState({
@@ -43,7 +42,7 @@ function Sandbox() {
         acceptableCTA: formData.acceptableCTA.split(',').map(cta => cta.trim()).filter(cta => cta !== '')
       };
       
-      const response = await fetch('http://127.0.0.1:5000/wordware', {
+      const response = await fetch('https://brand-agent-server.up.railway.app/wordware', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
