@@ -11,7 +11,7 @@ function Sandbox() {
     bodyLength: 42,
     acceptableCTA: ''
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
@@ -29,7 +29,7 @@ function Sandbox() {
     setLoading(true);
     setError(null);
     setResponse(null);
-    
+
     try {
       // Format the data for the API
       const payload = {
@@ -41,7 +41,7 @@ function Sandbox() {
         bodyLength: parseInt(formData.bodyLength),
         acceptableCTA: formData.acceptableCTA.split(',').map(cta => cta.trim()).filter(cta => cta !== '')
       };
-      
+
       const response = await fetch('https://brand-agent-server.up.railway.app/wordware', {
         method: 'POST',
         headers: {
@@ -49,13 +49,13 @@ function Sandbox() {
         },
         body: JSON.stringify(payload)
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to process request');
       }
-      
+
       setResponse(data);
     } catch (err) {
       setError(err.message || 'An error occurred while processing your request');
@@ -73,7 +73,7 @@ function Sandbox() {
   return (
     <Container className="mt-4">
       <h1 className="page-title">Wordware API Sandbox</h1>
-      
+
       <Row>
         <Col md={6}>
           <Card className="mb-4">
@@ -82,9 +82,9 @@ function Sandbox() {
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
                   <Form.Label>File URL</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    name="file_url" 
+                  <Form.Control
+                    type="text"
+                    name="file_url"
                     value={formData.file_url}
                     onChange={handleInputChange}
                     placeholder="Enter URL to your file"
@@ -97,9 +97,9 @@ function Sandbox() {
 
                 <Form.Group className="mb-3">
                   <Form.Label>File Name</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    name="file_name" 
+                  <Form.Control
+                    type="text"
+                    name="file_name"
                     value={formData.file_name}
                     onChange={handleInputChange}
                     placeholder="Enter file name"
@@ -109,8 +109,8 @@ function Sandbox() {
 
                 <Form.Group className="mb-3">
                   <Form.Label>File Type</Form.Label>
-                  <Form.Select 
-                    name="file_type" 
+                  <Form.Select
+                    name="file_type"
                     value={formData.file_type}
                     onChange={handleInputChange}
                   >
@@ -124,9 +124,9 @@ function Sandbox() {
 
                 <Form.Group className="mb-3">
                   <Form.Label>Language</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    name="language" 
+                  <Form.Control
+                    type="text"
+                    name="language"
                     value={formData.language}
                     onChange={handleInputChange}
                     placeholder="Enter language"
@@ -137,9 +137,9 @@ function Sandbox() {
                   <Col>
                     <Form.Group className="mb-3">
                       <Form.Label>Headline Length</Form.Label>
-                      <Form.Control 
-                        type="number" 
-                        name="headlineLength" 
+                      <Form.Control
+                        type="number"
+                        name="headlineLength"
                         value={formData.headlineLength}
                         onChange={handleInputChange}
                         min="1"
@@ -149,9 +149,9 @@ function Sandbox() {
                   <Col>
                     <Form.Group className="mb-3">
                       <Form.Label>Body Length</Form.Label>
-                      <Form.Control 
-                        type="number" 
-                        name="bodyLength" 
+                      <Form.Control
+                        type="number"
+                        name="bodyLength"
                         value={formData.bodyLength}
                         onChange={handleInputChange}
                         min="1"
@@ -162,9 +162,9 @@ function Sandbox() {
 
                 <Form.Group className="mb-3">
                   <Form.Label>Acceptable CTAs</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    name="acceptableCTA" 
+                  <Form.Control
+                    type="text"
+                    name="acceptableCTA"
                     value={formData.acceptableCTA}
                     onChange={handleInputChange}
                     placeholder="Enter CTAs separated by commas"
@@ -174,8 +174,8 @@ function Sandbox() {
                   </Form.Text>
                 </Form.Group>
 
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   type="submit"
                   disabled={loading}
                 >
@@ -196,7 +196,7 @@ function Sandbox() {
             </Card.Body>
           </Card>
         </Col>
-        
+
         <Col md={6}>
           <Card className="mb-4">
             <Card.Header as="h5">Response</Card.Header>
@@ -209,34 +209,34 @@ function Sandbox() {
                   <p className="mt-2">Processing your request...</p>
                 </div>
               )}
-              
+
               {error && (
                 <Alert variant="danger">
                   <Alert.Heading>Error</Alert.Heading>
                   <p>{error}</p>
                 </Alert>
               )}
-              
+
               {response && (
                 <div>
                   <h5>API Response:</h5>
                   <pre className="response-container">
-                    {JSON.stringify(response, null, 2)}
+                    {typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response)}
                   </pre>
-                  
+
                   {response.raw_response && (
                     <div className="mt-4">
                       <h5>Raw Response:</h5>
                       <div className="content-preview">
                         <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                          {response.raw_response}
+                          {typeof response.raw_response === 'object' ? JSON.stringify(response.raw_response, null, 2) : String(response.raw_response)}
                         </pre>
                       </div>
                     </div>
                   )}
                 </div>
               )}
-              
+
               {!loading && !error && !response && (
                 <div className="text-center text-muted p-4">
                   <p>Submit the form to see the API response here</p>
@@ -246,7 +246,7 @@ function Sandbox() {
           </Card>
         </Col>
       </Row>
-      
+
       <Card className="mb-4">
         <Card.Header as="h5">About Wordware API</Card.Header>
         <Card.Body>
