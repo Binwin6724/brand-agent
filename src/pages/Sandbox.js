@@ -31,7 +31,6 @@ function Sandbox() {
     setResponse(null);
 
     try {
-      // Format the data for the API
       const payload = {
         file_url: formData.file_url,
         file_name: formData.file_name,
@@ -42,7 +41,7 @@ function Sandbox() {
         acceptableCTA: formData.acceptableCTA.split(',').map(cta => cta.trim()).filter(cta => cta !== '')
       };
 
-      const response = await fetch('https://brand-agent-server.up.railway.app/wordware', {
+      const response = await fetch(process.env.REACT_APP_BACKEND_URL + '/wordware', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -219,19 +218,12 @@ function Sandbox() {
 
               {response && (
                 <div>
-                  <h5>API Response:</h5>
-                  <pre className="response-container">
-                    {typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response)}
-                  </pre>
-
                   {response.raw_response && (
                     <div className="mt-4">
                       <h5>Raw Response:</h5>
-                      <div className="content-preview">
-                        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                          {typeof response.raw_response === 'object' ? JSON.stringify(response.raw_response, null, 2) : String(response.raw_response)}
-                        </pre>
-                      </div>
+                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {typeof response.raw_response === 'object' ? JSON.stringify(response.raw_response, null, 2) : String(response.raw_response)}
+                      </pre>
                     </div>
                   )}
                 </div>
