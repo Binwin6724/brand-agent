@@ -115,6 +115,7 @@ function Sandbox() {
         article_link: formData.article_link,
         feedback_input: formData.chatMessages.map(msg => msg.text).join('\n') || ' ',
         pdf_file_path: formData.pdf_file || '',
+        file_upload_bool: formData.pdf_file ? true : false,
         feedback_bool: false,
         previous_generated_body: '',
         previous_generated_cta: '',
