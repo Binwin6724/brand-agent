@@ -7,7 +7,8 @@ function Sandbox() {
     post_prompt: '',
     brand_guidelines: '',
     chatMessages: [],
-    article_link: ''
+    article_link: '',
+    pdf_file: null
   });
 
   const [loading, setLoading] = useState(false);
@@ -18,10 +19,63 @@ function Sandbox() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
+  };
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check if file is PDF
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file only');
+      return;
+    }
+
+    // Create a unique filename
+    const timestamp = Date.now();
+    const fileName = `pdf_${timestamp}_${file.name}`;
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        
+        // Save file to the files directory
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/upload-pdf`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              fileName: fileName,
+              base64Data: base64Data
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to upload PDF');
+          }
+
+          setFormData(prev => ({
+            ...prev,
+            pdf_file: fileName
+          }));
+        } catch (error) {
+          console.error('Error saving PDF:', error);
+          alert('Failed to save PDF. Please try again.');
+        }
+      };
+    } catch (error) {
+      console.error('Error reading PDF:', error);
+      alert('Failed to read PDF. Please try again.');
+    }
   };
 
   const scrollToBottom = () => {
@@ -60,6 +114,7 @@ function Sandbox() {
         linkedIn_brand_guidelines: formData.brand_guidelines,
         article_link: formData.article_link,
         feedback_input: formData.chatMessages.map(msg => msg.text).join('\n') || ' ',
+        pdf_file_path: formData.pdf_file || '',
         feedback_bool: false,
         previous_generated_body: '',
         previous_generated_cta: '',
@@ -262,6 +317,7 @@ function Sandbox() {
       <Row className="g-4">
         <Col md={6}>
           <Card className="h-100">
+            <Card.Header as="h5" className="bg-white">Generated Post</Card.Header>
             <Card.Body className="d-flex flex-column">
               {loading ? (
                 <div className="text-center p-4">
@@ -338,6 +394,20 @@ function Sandbox() {
                     onChange={handleInputChange}
                     placeholder="Enter article link"
                   />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Upload PDF File <span style={{ color: 'gray', fontSize: '12px' }}>(Optional)</span></Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept=".pdf"
+                    onChange={handlePdfUpload}
+                  />
+                  {formData.pdf_file && (
+                    <Form.Text className="text-muted mt-2">
+                      Selected file: {formData.pdf_file.split('/').pop()}
+                    </Form.Text>
+                  )}
                 </Form.Group>
 
                 <div className="d-flex gap-2">
