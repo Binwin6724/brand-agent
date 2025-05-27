@@ -6,11 +6,12 @@ function Sandbox() {
   const [formData, setFormData] = useState({
     post_prompt: '',
     brand_guidelines: '',
-    chatMessages: []
+    chatMessages: [],
+    article_link: ''
   });
 
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState(null);
+  const [postResponse, setPostResponse] = useState(null);
   const [error, setError] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef(null);
@@ -31,11 +32,23 @@ function Sandbox() {
     scrollToBottom();
   }, [formData.chatMessages]);
 
+  const handleClearAll = () => {
+    setFormData({
+      post_prompt: '',
+      brand_guidelines: '',
+      chatMessages: [],
+      article_link: ''
+    });
+    setPostResponse(null);
+    setError(null);
+    setChatInput('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setResponse(null);
+    setPostResponse(null);
     setFormData(prev => ({
       ...prev,
       chatMessages: []
@@ -45,7 +58,11 @@ function Sandbox() {
       const payload = {
         human_prompt_start: formData.post_prompt,
         linkedIn_brand_guidelines: formData.brand_guidelines,
-        feedback_input: formData.chatMessages.map(msg => msg.text).join('\n') || ' '
+        article_link: formData.article_link,
+        feedback_input: formData.chatMessages.map(msg => msg.text).join('\n') || ' ',
+        feedback_bool: false,
+        previous_generated_body: '',
+        previous_generated_cta: '',
       };
 
       const response = await fetch(process.env.REACT_APP_BACKEND_URL + '/wordware', {
@@ -67,6 +84,8 @@ function Sandbox() {
       // Extract the post body and CTA from the response
       let postBody = '';
       let postCTA = '';
+      let feedbackInput = '';
+      let feedbackBool = false;
 
       try {
         // Handle the raw_response array structure
@@ -79,6 +98,8 @@ function Sandbox() {
           if (outputItem) {
             postBody = outputItem.value.output.linkedIn_post.linkedIn_post_body || '';
             postCTA = outputItem.value.output.linkedIn_post.linkedIn_post_call_to_action || '';
+            feedbackInput = outputItem.value.output.linkedIn_post.feedback_input || '';
+            feedbackBool = outputItem.value.output.linkedIn_post.feedback_bool || false;
           } else {
             // If not found in output, try to find in values
             const valuesItem = data.raw_response.find(item => 
@@ -88,6 +109,8 @@ function Sandbox() {
             if (valuesItem) {
               postBody = valuesItem.value.values.linkedIn_post.linkedIn_post_body || '';
               postCTA = valuesItem.value.values.linkedIn_post.linkedIn_post_call_to_action || '';
+              feedbackInput = valuesItem.value.values.linkedIn_post.feedback_input || '';
+              feedbackBool = valuesItem.value.values.linkedIn_post.feedback_bool || false;
             }
           }
           
@@ -100,6 +123,8 @@ function Sandbox() {
             if (outputsItem?.value?.values?.linkedIn_post) {
               postBody = outputsItem.value.values.linkedIn_post.linkedIn_post_body || '';
               postCTA = outputsItem.value.values.linkedIn_post.linkedIn_post_call_to_action || '';
+              feedbackInput = outputsItem.value.values.linkedIn_post.feedback_input || '';
+              feedbackBool = outputsItem.value.values.linkedIn_post.feedback_bool || false;
             }
           }
         }
@@ -108,19 +133,21 @@ function Sandbox() {
 
         if (!postBody && !postCTA) {
           console.warn('No post data found in response, showing raw response');
-          setResponse({
+          setPostResponse({
             postBody: 'Could not parse post data. Showing raw response:',
             postCTA: JSON.stringify(data, null, 2)
           });
         } else {
-          setResponse({
+          setPostResponse({
             postBody,
-            postCTA
+            postCTA,
+            feedbackInput,
+            feedbackBool
           });
         }
       } catch (error) {
         console.error('Error parsing response:', error);
-        setResponse({
+        setPostResponse({
           postBody: 'Error parsing response. Raw data:',
           postCTA: JSON.stringify(data, null, 2)
         });
@@ -159,8 +186,15 @@ function Sandbox() {
       const payload = {
         human_prompt_start: formData.post_prompt,
         linkedIn_brand_guidelines: formData.brand_guidelines,
-        feedback_input: feedbackInput || ' '
+        feedback_input: feedbackInput || ' ',
+        article_link: formData.article_link,
+        feedback_bool: (feedbackInput.length > 0) ? true : false,
+        previous_generated_body: postResponse?.postBody || '',
+        previous_generated_cta: postResponse?.postCTA || '',
       };
+
+      console.log('Feedback Input:', feedbackInput);
+      console.log('Payload:', payload);
 
       const response = await fetch(process.env.REACT_APP_BACKEND_URL + '/wordware', {
         method: 'POST',
@@ -200,8 +234,8 @@ function Sandbox() {
         }
       }
 
-      // Update the response with the new post data
-      setResponse({
+      // Update the post response with the new post data
+      setPostResponse({
         postBody,
         postCTA
       });
@@ -228,7 +262,6 @@ function Sandbox() {
       <Row className="g-4">
         <Col md={6}>
           <Card className="h-100">
-            <Card.Header as="h5" className="bg-white">Generated Post</Card.Header>
             <Card.Body className="d-flex flex-column">
               {loading ? (
                 <div className="text-center p-4">
@@ -242,15 +275,15 @@ function Sandbox() {
                   <Alert.Heading>Error</Alert.Heading>
                   <p>{error}</p>
                 </Alert>
-              ) : response ? (
+              ) : postResponse ? (
                 <div className="post-container">
                   <div className="post-content">
                     <h3 className="post-title">Generated Post</h3>
-                    <p className="post-body">{response.postBody}</p>
-                    {response.postCTA && (
+                    <p className="post-body">{postResponse.postBody}</p>
+                    {postResponse.postCTA && (
                       <div className="mt-4">
                         <p className="text-muted mb-2">Call to Action:</p>
-                        <p className="post-cta">{response.postCTA}</p>
+                        <p className="post-cta">{postResponse.postCTA}</p>
                       </div>
                     )}
                   </div>
@@ -295,29 +328,52 @@ function Sandbox() {
                     required
                   />
                 </Form.Group>
-                <Button
-                  variant="primary"
-                  type="submit"
-                  disabled={loading}
-                  className="w-100 mt-auto"
-                  style={{ marginTop: 'auto' }}
-                >
-                  {loading ? (
-                    <>
-                      <Spinner
-                        as="span"
-                        animation="border"
-                        size="sm"
-                        role="status"
-                        aria-hidden="true"
-                      />
-                      {' '}Processing...
-                    </>
-                  ) : 'Generate Post'}
-                </Button>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Article Link <span style={{ color: 'gray', fontSize: '12px' }}>(Optional)</span></Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="article_link"
+                    value={formData.article_link}
+                    onChange={handleInputChange}
+                    placeholder="Enter article link"
+                  />
+                </Form.Group>
+
+                <div className="d-flex gap-2">
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    disabled={loading}
+                    className="flex-grow-1"
+                  >
+                    {loading ? (
+                      <>
+                        <Spinner
+                          as="span"
+                          animation="border"
+                          size="sm"
+                          role="status"
+                          aria-hidden="true"
+                          className="me-2"
+                        />
+                        Processing...
+                      </>
+                    ) : 'Generate Post'}
+                  </Button>
+                  <Button
+                    variant="outline-danger"
+                    type="button"
+                    onClick={handleClearAll}
+                    disabled={loading}
+                    className="flex-shrink-0"
+                  >
+                    Clear All
+                  </Button>
+                </div>
               </Form>
 
-              {response && (
+              {postResponse && (
                 <div className="mt-4">
                   <hr />
                   <h6 className="mb-3">Chat about this post</h6>
