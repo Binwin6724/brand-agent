@@ -245,6 +245,8 @@ function Sandbox() {
         feedback_input: feedbackInput || ' ',
         article_link: formData.article_link,
         feedback_bool: (feedbackInput.length > 0) ? true : false,
+        file_upload_bool: formData.pdf_file ? true : false,
+        pdf_file_path: formData.pdf_file || '',
         previous_generated_body: postResponse?.postBody || '',
         previous_generated_cta: postResponse?.postCTA || '',
       };
