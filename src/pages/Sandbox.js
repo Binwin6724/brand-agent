@@ -717,7 +717,7 @@ Avoid title case for categories unless in menus or subheads` },
                     />
                     {postResponse?.horizonId ? (
                       <Form.Text className="text-muted mt-2">
-                        Auto-generated from API response
+                      
                       </Form.Text>
                     ) : (
                       <Form.Text className="text-muted mt-2">
