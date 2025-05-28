@@ -13,6 +13,82 @@ function Sandbox() {
     horizon_id: ''
   });
 
+  // Predefined brand guidelines
+  const brandGuidelinesOptions = [
+    {
+      label: "Okta Brand",
+      content: `*Tone of voice*
+Be candid and straightforward
+Be direct and use simple language.
+Be optimistic, but realistic
+Colloquialisms, words or phrases used in ordinary or familiar conversation are acceptable as long as they're well-known
+Do not use overly negative language and scenarios
+Write in a clear and confident way that highlights benefits, and avoid exaggeration or big claims like "infinite possibilities" or "game-changing."
+Use language that conveys real benefits and simplicity without leaning on overused words or clichés like "effortlessly" or "seamlessly."
+
+*Brand values*
+Relentlessly committed
+Universally trusted
+Intentionally neutral
+Customer-focused
+Innovative
+
+*Editorial guidelines*
+Capitalize 'Identity' when referring to the product category
+Do not modify campaign lines or taglines
+Enhance copy with proof points and stats
+Capitalize Okta-specific products, solutions, features, and team names.
+Use the Oxford comma
+Use one word, no space or hyphen, for login, logon, logoff, or logout as a noun
+Follow AP style guide for numbers
+MUST use sentence case consistently throughout. Capitalize only the first word of each sentence and proper nouns.
+Use end punctuation
+
+*Editorial restrictions*
+Do not modify or remove language
+Do not replace 'Auth0' with 'customer identity cloud'
+Do not repeat words
+Do not use negative language or scenarios
+Don't talk down to the customers
+Don't use technical jargon
+Don't promise a 'magic wand' solution
+Use a calm, confident tone without exclamation marks.`
+    },
+    {
+      label: "Adobe DX 2023", content: `*Tone of voice*
+Speak as executives to executives
+Sound confident, not arrogant
+Be clear and direct, not basic or simple
+Maintain a professional, not long-winded, tone
+Be relatable, not conversational
+Assume an MBA-level of education in your audience
+Use technical terms accurately, avoiding convoluted language
+Keep sentences short
+
+*Editorial guidelines*
+Use an active voice
+Use serial commas
+Use contractions to avoid sounding overly formal
+Use facts rather than hyperbole
+Em dashes get a space on either side in digital content
+Lists, bullets, and series should be consistent — either they all start with a noun or they all start with a verb
+Headlines are sentence case unless they are report titles functioning as headlines. In this instance, use title case.
+Sentence-case headlines are followed by terminal punctuation. Incomplete sentences do not take terminal punctuation.
+
+*Editorial restrictions*
+Do not use acronyms for Adobe products
+Do not use ampersands; spell out 'and'
+Do not abbreviate categories or use acronyms
+Do not use version numbers in marketing content
+Do not talk about competitors
+Avoid terms like 'the fastest', 'the best', or 'the only'
+Avoid title case for categories unless in menus or subheads` },
+    { label: "Custom", content: "" }
+  ];
+
+  const [selectedBrandGuideline, setSelectedBrandGuideline] = useState("Custom");
+  const [isCustomGuideline, setIsCustomGuideline] = useState(true);
+
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [loading, setLoading] = useState(false);
   const [postResponse, setPostResponse] = useState(null);
@@ -36,6 +112,26 @@ function Sandbox() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleBrandGuidelineChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedBrandGuideline(selectedValue);
+
+    if (selectedValue === "Custom") {
+      setIsCustomGuideline(true);
+      // Keep the current value if switching back to custom
+    } else {
+      setIsCustomGuideline(false);
+      // Find the selected guideline content
+      const selectedGuideline = brandGuidelinesOptions.find(option => option.label === selectedValue);
+      if (selectedGuideline) {
+        setFormData(prev => ({
+          ...prev,
+          brand_guidelines: selectedGuideline.content
+        }));
+      }
+    }
   };
 
   const handleClearAll = () => {
@@ -177,6 +273,19 @@ function Sandbox() {
                         name="horizon_id"
                         placeholder="Enter Horizon ID"
                         readOnly={!!postResponse?.horizonId}
+                        style={{
+                          backgroundColor: '#f8f9fa',
+                          color: '#6c757d',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '0.25rem',
+                          padding: '0.375rem 0.75rem',
+                          fontSize: '1rem',
+                          fontWeight: '400',
+                          lineHeight: '1.5',
+                          fontFamily: 'monospace',
+                          transition: 'all 0.2s ease-in-out',
+                          cursor: 'not-allowed'
+                        }}
                       />
                       {postResponse?.horizonId && (
                         <Form.Text className="text-muted">
@@ -269,7 +378,7 @@ function Sandbox() {
                           ...formData.chatMessages,
                           { text: chatInput, sender: 'user' }
                         ];
-                        
+
                         // Add optional fields to chat if they exist
                         const optionalFieldsInfo = [];
                         if (formData.brand_guidelines?.trim()) {
@@ -281,7 +390,7 @@ function Sandbox() {
                         if (formData.pdf_file) {
                           optionalFieldsInfo.push(`PDF File: Attached`);
                         }
-                        
+
                         // If there are optional fields, add them as a system message
                         if (optionalFieldsInfo.length > 0 && showOptionalFields) {
                           updatedChatMessages.push({
@@ -308,10 +417,10 @@ function Sandbox() {
                           const previousMessages = updatedChatMessages
                             .filter(msg => msg.sender === 'user' && msg.text !== chatInput) // Exclude current message
                             .map(msg => msg.text);
-                          
+
                           // Determine if this is a follow-up message
                           const isFollowUp = previousMessages.length > 0;
-                          
+
                           const payload = {
                             human_prompt_start: chatInput, // Current message is always the human prompt
                             linkedIn_brand_guidelines: formData.brand_guidelines,
@@ -324,7 +433,7 @@ function Sandbox() {
                             previous_generated_cta: postResponse?.postCTA || '',
                             horizon_id: formData.horizon_id || ''
                           };
-                          
+
                           console.log('Payload:', payload);
 
                           const response = await fetch(process.env.REACT_APP_BACKEND_URL + '/wordware', {
@@ -357,7 +466,7 @@ function Sandbox() {
                               if (outputItem) {
                                 postBody = outputItem.value.output.linkedIn_post.linkedIn_post_body || '';
                                 postCTA = outputItem.value.output.linkedIn_post.linkedIn_post_call_to_action || '';
-                                
+
                                 // Extract horizon-id if available
                                 if (outputItem.value.output['horizon-id']) {
                                   const horizonData = outputItem.value.output['horizon-id'];
@@ -378,7 +487,7 @@ function Sandbox() {
                                 if (valuesItem) {
                                   postBody = valuesItem.value.values.linkedIn_post.linkedIn_post_body || '';
                                   postCTA = valuesItem.value.values.linkedIn_post.linkedIn_post_call_to_action || '';
-                                  
+
                                   // Extract horizon-id if available
                                   if (valuesItem.value.values['horizon-id']) {
                                     const horizonData = valuesItem.value.values['horizon-id'];
@@ -402,8 +511,8 @@ function Sandbox() {
                                 if (outputsItem?.value?.values?.linkedIn_post) {
                                   postBody = outputsItem.value.values.linkedIn_post.linkedIn_post_body || '';
                                   postCTA = outputsItem.value.values.linkedIn_post.linkedIn_post_call_to_action || '';
-                                  
-                                  
+
+
                                   // Extract horizon-id if available
                                   if (outputsItem.value.values['horizon-id']) {
                                     const horizonData = outputsItem.value.values['horizon-id'];
@@ -513,13 +622,40 @@ function Sandbox() {
                   <div className="optional-fields border rounded p-3 mb-3">
                     <Form.Group className="mb-3">
                       <Form.Label>Brand Guidelines</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="brand_guidelines"
-                        value={formData.brand_guidelines}
-                        onChange={handleInputChange}
-                        placeholder="Enter brand guidelines"
-                      />
+                      <div className="mb-2">
+                        <Form.Select
+                          value={selectedBrandGuideline}
+                          onChange={handleBrandGuidelineChange}
+                          className="mb-2"
+                        >
+                          {brandGuidelinesOptions.map(option => (
+                            <option key={option.label} value={option.label}>{option.label}</option>
+                          ))}
+                        </Form.Select>
+                      </div>
+                      {isCustomGuideline ? (
+                        <Form.Control
+                          as="textarea"
+                          rows={5}
+                          name="brand_guidelines"
+                          value={formData.brand_guidelines}
+                          onChange={handleInputChange}
+                          placeholder="Enter custom brand guidelines"
+                        />
+                      ) : (
+                        <div
+                          className="p-2 border rounded"
+                          style={{
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            backgroundColor: '#f8f9fa',
+                            whiteSpace: 'pre-line',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {formData.brand_guidelines}
+                        </div>
+                      )}
                     </Form.Group>
 
                     <Form.Group className="mb-3">
