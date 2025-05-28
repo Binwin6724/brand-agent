@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Form, Button, Card, Alert, Spinner, Container, Row, Col } from 'react-bootstrap';
 import './Sandbox.css';
 
@@ -95,6 +95,22 @@ Avoid title case for categories unless in menus or subheads` },
   const [error, setError] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef(null);
+
+  // Utility functions
+  const scrollToBottom = () => {
+    // Only scroll the chat container, not the whole page
+    if (messagesEndRef.current) {
+      const chatContainer = messagesEndRef.current.closest('.chat-container');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Only scroll the chat messages, not the entire page
+    scrollToBottom();
+  }, [formData.chatMessages]);
 
   // Form handling functions
   const handleInputChange = (e) => {
@@ -199,105 +215,21 @@ Avoid title case for categories unless in menus or subheads` },
       {/* <h1 className="page-title">Sandbox 🏖️</h1> */}
 
       <Row className="g-4">
-        <Col md={6}>
+
+      <Col md={6}>
           <Card className="h-100">
-            <Card.Header as="h5" className="bg-white">Generated Post</Card.Header>
-            <Card.Body className="d-flex flex-column">
-              {loading ? (
-                <div className="text-center p-4">
-                  <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </Spinner>
-                  <p className="mt-2">Generating your post...</p>
-                </div>
-              ) : error ? (
-                <Alert variant="danger">
-                  <Alert.Heading>Error</Alert.Heading>
-                  <p>{error}</p>
-                </Alert>
-              ) : postResponse ? (
-                <div className="post-container">
-                  <div className="post-header">
-                    <div className="post-avatar">A</div>
-                    <div className="post-user-info">
-                      <div className="post-user-name">GenStudio AI</div>
-                      <div className="post-user-headline">AI Content Generator</div>
-                      <div className="post-timestamp">Just now<span className="dot" style={{ backgroundColor: '#6cae4f', width: '6px', height: '6px', display: 'inline-block', borderRadius: '50%' }}></span> <i className="bi bi-globe"></i> </div>
-                    </div>
-                  </div>
-
-                  <div className="post-content">
-                    <p className="post-body">{postResponse.postBody}</p>
-
-                    {postResponse.postCTA && (
-                      <div className="post-cta-container">
-                        <div className="post-cta-button">{postResponse.postCTA}</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="post-engagement">
-                    <div className="post-reactions">
-                      <div className="reaction-icons">
-                        <div className="reaction-icon like-icon">👍</div>
-                        <div className="reaction-icon celebrate-icon">🎉</div>
-                        <div className="reaction-icon support-icon">❤️</div>
-                      </div>
-                      <span>42 reactions</span>
-                    </div>
-                    <div className="post-comments">8 comments</div>
-                  </div>
-
-                  <div className="post-actions">
-                    <div className="post-action-button">Like</div>
-                    <div className="post-action-button">Comment</div>
-                    <div className="post-action-button">Share</div>
-                  </div>
-
-                  <div className="mt-4 pt-3" style={{ borderTop: '1px solid #dee2e6', padding: '1rem' }}>
-                    <Form.Group>
-                      <Form.Label>Horizon ID</Form.Label>
-                      <Form.Control
-                        type="text"
-                        value={postResponse?.horizonId || formData.horizon_id}
-                        onChange={handleInputChange}
-                        name="horizon_id"
-                        placeholder="Enter Horizon ID"
-                        readOnly={!!postResponse?.horizonId}
-                        style={{
-                          backgroundColor: '#f8f9fa',
-                          color: '#6c757d',
-                          border: '1px solid #dee2e6',
-                          borderRadius: '0.25rem',
-                          padding: '0.375rem 0.75rem',
-                          fontSize: '1rem',
-                          fontWeight: '400',
-                          lineHeight: '1.5',
-                          fontFamily: 'monospace',
-                          transition: 'all 0.2s ease-in-out',
-                          cursor: 'not-allowed'
-                        }}
-                      />
-                      {postResponse?.horizonId && (
-                        <Form.Text className="text-muted">
-                          Auto-generated from API response
-                        </Form.Text>
-                      )}
-                    </Form.Group>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center text-muted p-4">
-                  <p>Submit the form to see the generated post</p>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col md={6}>
-          <Card className="h-100">
-            <Card.Header as="h5" className="bg-white">LinkedIn Agent</Card.Header>
+            <Card.Header as="h5" className="bg-white d-flex justify-content-between align-items-center">
+              <span>LinkedIn Agent</span>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                type="button"
+                onClick={handleClearAll}
+                disabled={loading}
+              >
+                Reset
+              </Button>
+            </Card.Header>
             <Card.Body>
               <Form>
                 <div className="chat-container mb-4" style={{
@@ -341,7 +273,6 @@ Avoid title case for categories unless in menus or subheads` },
                 </div>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Enter your prompt <span className="text-danger">*</span></Form.Label>
                   <div className="d-flex">
                     <Form.Control
                       type="text"
@@ -353,7 +284,7 @@ Avoid title case for categories unless in menus or subheads` },
                           document.getElementById('send-button').click();
                         }
                       }}
-                      placeholder="What kind of LinkedIn post would you like to create?"
+                      placeholder="Instructions"
                       className="me-2"
                       required
                     />
@@ -528,14 +459,30 @@ Avoid title case for categories unless in menus or subheads` },
                                 postCTA: JSON.stringify(data, null, 2)
                               });
                             } else {
+                              // Save current scroll position before updating post response
+                              const scrollPosition = window.scrollY;
+                              
                               setPostResponse({ postBody, postCTA, horizonId });
+                              
+                              // Restore scroll position after state update
+                              setTimeout(() => {
+                                window.scrollTo(0, scrollPosition);
+                              }, 0);
                             }
                           } catch (error) {
                             console.error('Error parsing response:', error);
+                            // Save current scroll position before updating post response
+                            const scrollPosition = window.scrollY;
+                            
                             setPostResponse({
                               postBody: 'Error parsing response. Raw data:',
                               postCTA: JSON.stringify(data, null, 2)
                             });
+                            
+                            // Restore scroll position after state update
+                            setTimeout(() => {
+                              window.scrollTo(0, scrollPosition);
+                            }, 0);
                           }
 
                           // Add bot response to chat
@@ -595,18 +542,8 @@ Avoid title case for categories unless in menus or subheads` },
                     >
                       <span style={{ fontSize: '18px' }}>{showOptionalFields ? '−' : '+'}</span>
                     </Button>
-                    <small className="text-muted">{showOptionalFields ? 'Hide options' : 'More options'}</small>
+                    <small className="text-muted">{showOptionalFields ? 'Hide Context' : 'Add Additional Context'}</small>
                   </div>
-
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    type="button"
-                    onClick={handleClearAll}
-                    disabled={loading}
-                  >
-                    Clear All
-                  </Button>
                 </div>
 
                 {showOptionalFields && (
@@ -680,7 +617,116 @@ Avoid title case for categories unless in menus or subheads` },
             </Card.Body>
           </Card>
         </Col>
+
+        <Col md={6}>
+          <div className="d-flex flex-column h-100">
+            <Card className="mb-3">
+              <Card.Header as="h5" className="bg-white">Generated Post</Card.Header>
+              <Card.Body className="d-flex flex-column">
+                {loading ? (
+                  <div className="text-center p-4">
+                    <Spinner animation="border" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </Spinner>
+                    <p className="mt-2">Generating your post...</p>
+                  </div>
+                ) : error ? (
+                  <Alert variant="danger">
+                    <Alert.Heading>Error</Alert.Heading>
+                    <p>{error}</p>
+                  </Alert>
+                ) : postResponse ? (
+                  <div className="post-container">
+                    <div className="post-header">
+                      <div className="post-avatar">A</div>
+                      <div className="post-user-info">
+                        <div className="post-user-name">GenStudio AI</div>
+                        <div className="post-user-headline">AI Content Generator</div>
+                        <div className="post-timestamp">Just now<span className="dot" style={{ backgroundColor: '#6cae4f', width: '6px', height: '6px', display: 'inline-block', borderRadius: '50%' }}></span> <i className="bi bi-globe"></i> </div>
+                      </div>
+                    </div>
+
+                    <div className="post-content">
+                      <p className="post-body">{postResponse.postBody}</p>
+
+                      {postResponse.postCTA && (
+                        <div className="post-cta-container">
+                          <div className="post-cta-button">{postResponse.postCTA}</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="post-engagement">
+                      <div className="post-reactions">
+                        <div className="reaction-icons">
+                          <div className="reaction-icon like-icon">👍</div>
+                          <div className="reaction-icon celebrate-icon">🎉</div>
+                          <div className="reaction-icon support-icon">❤️</div>
+                        </div>
+                        <span>42 reactions</span>
+                      </div>
+                      <div className="post-comments">8 comments</div>
+                    </div>
+
+                    <div className="post-actions">
+                      <div className="post-action-button">Like</div>
+                      <div className="post-action-button">Comment</div>
+                      <div className="post-action-button">Share</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted p-4">
+                    <p>Submit the form to see the generated post</p>
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+            
+            {postResponse && (
+              <Card>
+                <Card.Header as="h5" className="bg-white">Horizon ID</Card.Header>
+                <Card.Body>
+                  <Form.Group>
+                    <Form.Control
+                      type="text"
+                      value={postResponse?.horizonId || formData.horizon_id}
+                      onChange={handleInputChange}
+                      name="horizon_id"
+                      placeholder="Enter Horizon ID"
+                      readOnly={!!postResponse?.horizonId}
+                      style={{
+                        backgroundColor: '#f8f9fa',
+                        color: '#6c757d',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '0.25rem',
+                        padding: '0.375rem 0.75rem',
+                        fontSize: '1rem',
+                        fontWeight: '400',
+                        lineHeight: '1.5',
+                        fontFamily: 'monospace',
+                        transition: 'all 0.2s ease-in-out',
+                        cursor: postResponse?.horizonId ? 'not-allowed' : 'text'
+                      }}
+                    />
+                    {postResponse?.horizonId ? (
+                      <Form.Text className="text-muted mt-2">
+                        Auto-generated from API response
+                      </Form.Text>
+                    ) : (
+                      <Form.Text className="text-muted mt-2">
+                        Enter a custom Horizon ID or generate a post to get an auto-generated ID
+                      </Form.Text>
+                    )}
+                  </Form.Group>
+                </Card.Body>
+              </Card>
+            )}
+          </div>
+        </Col>
+
       </Row>
+
+
     </Container>
   );
 }
