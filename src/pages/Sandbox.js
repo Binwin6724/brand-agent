@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Form, Button, Card, Alert, Spinner, Container, Row, Col } from 'react-bootstrap';
 import './Sandbox.css';
 
@@ -95,15 +95,6 @@ Avoid title case for categories unless in menus or subheads` },
   const [error, setError] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef(null);
-
-  // Utility functions
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [formData.chatMessages]);
 
   // Form handling functions
   const handleInputChange = (e) => {
