@@ -216,7 +216,7 @@ Avoid title case for categories unless in menus or subheads` },
 
       <Row className="g-4">
 
-      <Col md={6}>
+        <Col md={6}>
           <Card className="h-100">
             <Card.Header as="h5" className="bg-white d-flex justify-content-between align-items-center">
               <span>Agent POC</span>
@@ -461,9 +461,9 @@ Avoid title case for categories unless in menus or subheads` },
                             } else {
                               // Save current scroll position before updating post response
                               const scrollPosition = window.scrollY;
-                              
+
                               setPostResponse({ postBody, postCTA, horizonId });
-                              
+
                               // Restore scroll position after state update
                               setTimeout(() => {
                                 window.scrollTo(0, scrollPosition);
@@ -473,12 +473,12 @@ Avoid title case for categories unless in menus or subheads` },
                             console.error('Error parsing response:', error);
                             // Save current scroll position before updating post response
                             const scrollPosition = window.scrollY;
-                            
+
                             setPostResponse({
                               postBody: 'Error parsing response. Raw data:',
                               postCTA: JSON.stringify(data, null, 2)
                             });
-                            
+
                             // Restore scroll position after state update
                             setTimeout(() => {
                               window.scrollTo(0, scrollPosition);
@@ -635,7 +635,17 @@ Avoid title case for categories unless in menus or subheads` },
                 ) : postResponse ? (
                   <div className="post-container">
                     <div className="post-header">
-                      <div className="post-avatar">A</div>
+                      <div className="post-avatar">
+                        <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+                          <view id="AdobeExperienceCloud" viewBox="0 0 250 244" /><svg data-name="Layer 1" viewBox="-5 -5 250 244" width="30"
+                            height="30" xmlns="http://www.w3.org/2000/svg">
+                            <rect height="234" rx="42.5" width="240" fill="#fa0f00" />
+                            <path
+                              d="M186.617 175.95h-28.506a6.243 6.243 0 0 1-5.847-3.769l-30.947-72.359a1.364 1.364 0 0 0-2.611-.034L99.42 145.731a1.635 1.635 0 0 0 1.506 2.269h21.2a3.27 3.27 0 0 1 3.01 1.994l9.281 20.655a3.812 3.812 0 0 1-3.507 5.301H53.734a3.518 3.518 0 0 1-3.213-4.904l49.09-116.902A6.639 6.639 0 0 1 105.843 50h28.314a6.628 6.628 0 0 1 6.232 4.144l49.43 116.902a3.517 3.517 0 0 1-3.202 4.904z"
+                              data-name="256" fill="#fff" />
+                          </svg>
+                        </svg>
+                      </div>
                       <div className="post-user-info">
                         <div className="post-user-name">GenStudio AI</div>
                         <div className="post-user-headline">AI Content Generator</div>
@@ -678,7 +688,7 @@ Avoid title case for categories unless in menus or subheads` },
                 )}
               </Card.Body>
             </Card>
-            
+
             {postResponse && (
               <Card>
                 <Card.Header as="h5" className="bg-white">Horizon ID</Card.Header>
