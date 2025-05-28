@@ -219,7 +219,7 @@ Avoid title case for categories unless in menus or subheads` },
       <Col md={6}>
           <Card className="h-100">
             <Card.Header as="h5" className="bg-white d-flex justify-content-between align-items-center">
-              <span>LinkedIn Agent</span>
+              <span>Agent POC</span>
               <Button
                 variant="outline-danger"
                 size="sm"
@@ -524,9 +524,6 @@ Avoid title case for categories unless in menus or subheads` },
                       ) : 'Send'}
                     </Button>
                   </div>
-                  <Form.Text className="text-muted">
-                    Your prompt will be used to generate the LinkedIn post
-                  </Form.Text>
                 </Form.Group>
 
 
@@ -621,7 +618,7 @@ Avoid title case for categories unless in menus or subheads` },
         <Col md={6}>
           <div className="d-flex flex-column h-100">
             <Card className="mb-3">
-              <Card.Header as="h5" className="bg-white">Generated Post</Card.Header>
+              <Card.Header as="h5" className="bg-white">Content Canvas</Card.Header>
               <Card.Body className="d-flex flex-column">
                 {loading ? (
                   <div className="text-center p-4">
@@ -676,7 +673,7 @@ Avoid title case for categories unless in menus or subheads` },
                   </div>
                 ) : (
                   <div className="text-center text-muted p-4">
-                    <p>Submit the form to see the generated post</p>
+                    <p>Provide instructions to generate content</p>
                   </div>
                 )}
               </Card.Body>
