@@ -653,7 +653,8 @@ Avoid title case for categories unless in menus or subheads` },
                             fontSize: '0.875rem'
                           }}
                         >
-                          {formData.brand_guidelines}
+                          {/* Don't show the actual content for predefined guidelines */}
+                          <p className="text-muted mb-0">{selectedBrandGuideline} guidelines selected</p>
                         </div>
                       )}
                     </Form.Group>
