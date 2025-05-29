@@ -95,6 +95,7 @@ Avoid title case for categories unless in menus or subheads` },
   const [error, setError] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [initialContextSet, setInitialContextSet] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Utility functions
@@ -116,15 +117,51 @@ Avoid title case for categories unless in menus or subheads` },
   // Form handling functions
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Check if this is a context change after conversation has started
+    if ((name === 'brand_guidelines' || name === 'article_link') && 
+        formData.chatMessages.length > 0 && 
+        !initialContextSet) {
+      // Add a system message warning that context changes after conversation starts are not allowed
+      setFormData(prev => ({
+        ...prev,
+        chatMessages: [
+          ...prev.chatMessages,
+          {
+            text: 'Context changes are not allowed after the conversation has started. Please reset the conversation to change context.',
+            sender: 'system',
+            timestamp: Date.now()
+          }
+        ],
+        [name]: value
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleBrandGuidelineChange = (e) => {
     const selectedValue = e.target.value;
     setSelectedBrandGuideline(selectedValue);
+
+    // Check if conversation has already started
+    if (formData.chatMessages.length > 0 && !initialContextSet) {
+      // Add a system message warning that context changes after conversation starts are not allowed
+      setFormData(prev => ({
+        ...prev,
+        chatMessages: [
+          ...prev.chatMessages,
+          {
+            text: 'Context changes are not allowed after the conversation has started. Please reset the conversation to change context.',
+            sender: 'system',
+            timestamp: Date.now()
+          }
+        ]
+      }));
+    }
 
     if (selectedValue === "Custom") {
       setIsCustomGuideline(true);
@@ -155,6 +192,7 @@ Avoid title case for categories unless in menus or subheads` },
     setError(null);
     setChatInput('');
     setShowOptionalFields(false);
+    setInitialContextSet(false); // Reset the initialContextSet flag
   };
 
   // File handling functions
@@ -166,6 +204,22 @@ Avoid title case for categories unless in menus or subheads` },
     if (file.type !== 'application/pdf') {
       alert('Please upload a PDF file only');
       return;
+    }
+    
+    // Check if conversation has already started
+    if (formData.chatMessages.length > 0 && !initialContextSet) {
+      // Add a system message warning that context changes after conversation starts are not allowed
+      setFormData(prev => ({
+        ...prev,
+        chatMessages: [
+          ...prev.chatMessages,
+          {
+            text: 'Context changes are not allowed after the conversation has started. Please reset the conversation to change context.',
+            sender: 'system',
+            timestamp: Date.now()
+          }
+        ]
+      }));
     }
 
     // Create a unique filename
@@ -319,7 +373,8 @@ Avoid title case for categories unless in menus or subheads` },
                           }
                         ];
 
-                        // Add optional fields to chat if they exist
+                        // Add optional fields to chat if they exist, but only if this is the first message
+                        const isFirstMessage = formData.chatMessages.length === 0;
                         const optionalFieldsInfo = [];
                         if (formData.brand_guidelines?.trim()) {
                           optionalFieldsInfo.push(`Brand Guidelines Applied`);
@@ -331,13 +386,17 @@ Avoid title case for categories unless in menus or subheads` },
                           optionalFieldsInfo.push(`PDF File: Attached`);
                         }
 
-                        // If there are optional fields, add them as a system message
-                        if (optionalFieldsInfo.length > 0 && showOptionalFields) {
+                        // If there are optional fields and this is the first message, add them as a system message
+                        // Always show the system message on first message if there are optional fields
+                        if (optionalFieldsInfo.length > 0 && isFirstMessage) {
                           updatedChatMessages.push({
                             text: `Additional context provided:\n${optionalFieldsInfo.join('\n')}`,
                             sender: 'system',
                             timestamp: Date.now()
                           });
+                          
+                          // Set the initialContextSet flag to true since this is the first message
+                          setInitialContextSet(true);
                         }
 
                         setFormData(prev => ({
