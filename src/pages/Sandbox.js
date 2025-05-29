@@ -213,6 +213,18 @@ Avoid title case for categories unless in menus or subheads` },
 
   return (
     <Container className="mt-4">
+      {/* <div className="d-flex align-items-center" style={{ gap: '10px', marginBottom: '20px' }}>
+        <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+          <view id="AdobeExperienceCloud" viewBox="0 0 250 244" />
+          <svg data-name="Layer 1" viewBox="-5 -5 250 244" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+            <rect height="234" rx="42.5" width="240" fill="#fa0f00" />
+            <path
+              d="M186.617 175.95h-28.506a6.243 6.243 0 0 1-5.847-3.769l-30.947-72.359a1.364 1.364 0 0 0-2.611-.034L99.42 145.731a1.635 1.635 0 0 0 1.506 2.269h21.2a3.27 3.27 0 0 1 3.01 1.994l9.281 20.655a3.812 3.812 0 0 1-3.507 5.301H53.734a3.518 3.518 0 0 1-3.213-4.904l49.09-116.902A6.639 6.639 0 0 1 105.843 50h28.314a6.628 6.628 0 0 1 6.232 4.144l49.43 116.902a3.517 3.517 0 0 1-3.202 4.904z"
+                              data-name="256" fill="#fff" />
+          </svg>
+        </svg>
+        <span className="page-title">Adobe GenStudio</span>
+      </div> */}
       {/* <h1 className="page-title">Sandbox 🏖️</h1> */}
 
       <Row className="g-4">
@@ -667,8 +679,8 @@ Avoid title case for categories unless in menus or subheads` },
                       </div>
                       <div className="post-user-info">
                         <div className="post-user-name">GenStudio AI</div>
-                        <div className="post-user-headline">AI Content Generator</div>
-                        <div className="post-timestamp">Just now<span className="dot" style={{ backgroundColor: '#6cae4f', width: '6px', height: '6px', display: 'inline-block', borderRadius: '50%' }}></span> <i className="bi bi-globe"></i> </div>
+                        {/* <div className="post-user-headline">AI Content Generator</div>
+                        <div className="post-timestamp">Just now<span className="dot" style={{ backgroundColor: '#6cae4f', width: '6px', height: '6px', display: 'inline-block', borderRadius: '50%' }}></span> <i className="bi bi-globe"></i> </div> */}
                       </div>
                     </div>
 
