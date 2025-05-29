@@ -3,7 +3,7 @@
   height: 46px;
   background: #18191b;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  display: flex;
+  display: none;
   position: fixed;
   top: 0;
   left: 0;

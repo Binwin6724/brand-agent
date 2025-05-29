@@ -20,6 +20,13 @@
   padding: 1.25rem 1.5rem;
 }
 
+.text-muted {
+  color: #6c757d;
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+}
+
 .card-body {
   padding: 1.5rem;
 }
@@ -354,7 +361,7 @@
   border-radius: 8px !important;
   font-style: italic !important;
   font-size: 0.85rem !important;
-  align-self: center;
+  align-self: flex-start;
   max-width: 90% !important;
   padding: 8px 12px !important;
   margin: 8px 0 !important;

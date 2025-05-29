@@ -19,7 +19,7 @@ function App() {
     <Router>
       <div className="app">
         <SideNavigation isCollapsed={isNavCollapsed} />
-        <TopNavigation handleMenuClick={handleMenuClick} />
+        <TopNavigation handleMenuClick={handleMenuClick} /> 
         <div className="home-root">
           <div className='home-root-card'>
             <Routes>

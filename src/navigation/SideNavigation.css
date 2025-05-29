@@ -8,6 +8,7 @@
   position: fixed;
   top: 25px;
   left: 0;
+  display: none;
   transition: width 0.3s ease;
 }
 

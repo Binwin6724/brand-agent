@@ -220,7 +220,7 @@ Avoid title case for categories unless in menus or subheads` },
         <Col md={6}>
           <Card className="h-100">
             <Card.Header as="h5" className="bg-white d-flex justify-content-between align-items-center">
-              <span>Agent POC</span>
+              <span>Agent</span>
               <Button
                 variant="outline-danger"
                 size="sm"
@@ -254,7 +254,7 @@ Avoid title case for categories unless in menus or subheads` },
                             animationDelay: `${index * 0.1}s` // Staggered animation effect
                           }}
                         >
-                          {msg.sender === 'system' && <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>System</div>}
+                          {msg.sender === 'system' && <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Agent Message</div>}
                           <div className="message-content">
                             {msg.text}
                           </div>
@@ -310,7 +310,7 @@ Avoid title case for categories unless in menus or subheads` },
                         // Add optional fields to chat if they exist
                         const optionalFieldsInfo = [];
                         if (formData.brand_guidelines?.trim()) {
-                          optionalFieldsInfo.push(`Brand Guidelines: ${formData.brand_guidelines}`);
+                          optionalFieldsInfo.push(`Brand Guidelines Applied`);
                         }
                         if (formData.article_link?.trim()) {
                           optionalFieldsInfo.push(`Article Link: ${formData.article_link}`);
@@ -557,7 +557,7 @@ Avoid title case for categories unless in menus or subheads` },
                 {showOptionalFields && (
                   <div className="optional-fields border rounded p-3 mb-3">
                     <Form.Group className="mb-3">
-                      <Form.Label>Brand Guidelines</Form.Label>
+                      <Form.Label>Brand</Form.Label>
                       <div className="mb-2">
                         <Form.Select
                           value={selectedBrandGuideline}
@@ -596,18 +596,18 @@ Avoid title case for categories unless in menus or subheads` },
                     </Form.Group>
 
                     <Form.Group className="mb-3">
-                      <Form.Label>Article Link</Form.Label>
+                      <Form.Label>Webcrawl Reference <span className="text-muted">(Optional)</span></Form.Label>
                       <Form.Control
                         type="text"
                         name="article_link"
                         value={formData.article_link}
                         onChange={handleInputChange}
-                        placeholder="Enter article link"
+                        placeholder="Enter webcrawl reference"
                       />
                     </Form.Group>
 
                     <Form.Group className="mb-3">
-                      <Form.Label>Upload PDF File</Form.Label>
+                      <Form.Label>PDF Reference (e.g., Creative Brief) <span className="text-muted">(Optional)</span></Form.Label>
                       <Form.Control
                         type="file"
                         accept=".pdf"
@@ -629,7 +629,7 @@ Avoid title case for categories unless in menus or subheads` },
         <Col md={6}>
           <div className="d-flex flex-column h-100">
             <Card className="h-100">
-              <Card.Header as="h5" className="bg-white">Content Canvas</Card.Header>
+              <Card.Header as="h5" className="bg-white">Canvas</Card.Header>
               <Card.Body className="d-flex flex-column">
                 {loading ? (
                   <div className="ai-loader-container">
@@ -748,17 +748,13 @@ Avoid title case for categories unless in menus or subheads` },
                       </svg> Share</div>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center text-muted p-4">
-                    <p>Provide instructions to generate content</p>
-                  </div>
-                )}
+                ) : (console.log())}
               </Card.Body>
             </Card>
 
             {postResponse && (
-              <Card>
-                <Card.Header as="h5" className="bg-white">Horizon ID</Card.Header>
+              <Card style={{ marginTop: '20px' }}>
+                <Card.Header as="h5" className="bg-white">Auto Assigned ID <span className="text-muted">(Horizon ID)</span></Card.Header>
                 <Card.Body>
                   <Form.Group>
                     <Form.Control
@@ -773,13 +769,14 @@ Avoid title case for categories unless in menus or subheads` },
                         color: '#6c757d',
                         border: '1px solid #dee2e6',
                         borderRadius: '0.25rem',
-                        padding: '0.375rem 0.75rem',
+                        padding: '0.3rem',
+                        marginBottom: '30px',
                         fontSize: '1rem',
                         fontWeight: '400',
                         lineHeight: '1.5',
                         fontFamily: 'monospace',
                         transition: 'all 0.2s ease-in-out',
-                        cursor: postResponse?.horizonId ? 'not-allowed' : 'text'
+                        cursor: postResponse?.horizonId ? 'not-allowed' : 'text',
                       }}
                     />
                     {postResponse?.horizonId ? (

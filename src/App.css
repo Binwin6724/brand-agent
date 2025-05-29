@@ -5,15 +5,18 @@
 }
 
 .home-root {
-  margin-left: 130px;
-  margin-top: 25px;
+  margin-left: 0px !important;
+  margin-top: 0px !important;
   padding: 20px;
   transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
 }
 
 .app .side-nav-root.collapsed + .top-nav-root + .home-root {
   margin-left: 60px;
-}
+} 
 
 .home-root-card {
   padding: 20px;
