@@ -956,7 +956,6 @@ Avoid title case for categories unless in menus or subheads` },
                       </div>
                       <div className="facebook-post-user-info">
                         <div className="facebook-post-user-name">GenStudio AI</div>
-                        <div className="facebook-post-user-headline">Sponsored · <span className="facebook-globe-icon">🌐</span></div>
                       </div>
                     </div>
 
