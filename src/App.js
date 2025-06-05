@@ -6,7 +6,7 @@ import SideNavigation from './navigation/SideNavigation';
 import TopNavigation from './navigation/TopNavigation';
 import SearchAd from './pages/SearchAd';
 import Content from './pages/Content';
-import Sandbox from './pages/Sandbox';
+import GenStudioSandbox from './pages/GenStudioSandbox';
 
 function App() {
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
@@ -27,7 +27,7 @@ function App() {
               <Route path="/content" element={<Content />} />
               <Route path="/home" element={<Home />} />
               <Route path="/search-ad" element={<SearchAd />} />
-              <Route path="/sandbox" element={<Sandbox />} />
+              <Route path="/sandbox" element={<GenStudioSandbox/>} />
             </Routes>
           </div>
         </div>

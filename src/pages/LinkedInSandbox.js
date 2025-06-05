@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Form, Button, Card, Alert, Spinner, Container, Row, Col } from 'react-bootstrap';
 import './Sandbox.css';
 
-function Sandbox() {
+function LinkedInSandbox() {
   // State declarations
   const [formData, setFormData] = useState({
     post_prompt: '',
@@ -439,7 +439,7 @@ Avoid title case for categories unless in menus or subheads` },
 
                           console.log('Payload:', payload);
 
-                          const response = await fetch(process.env.REACT_APP_BACKEND_URL + '/wordware', {
+                          const response = await fetch(process.env.REACT_APP_BACKEND_URL + '/wordware-linkedin', {
                             method: 'POST',
                             headers: {
                               'Content-Type': 'application/json'
@@ -873,4 +873,4 @@ Avoid title case for categories unless in menus or subheads` },
   );
 }
 
-export default Sandbox;
+export default LinkedInSandbox;
