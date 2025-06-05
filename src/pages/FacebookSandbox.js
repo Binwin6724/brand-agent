@@ -299,6 +299,48 @@ Avoid title case for categories unless in menus or subheads` },
         image_file: file.name
       }));
     }
+
+    // Create a unique filename
+    const timestamp = Date.now();
+    const fileName = `image_${timestamp}_${file.name}`;
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+
+        // Save file to the files directory
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/upload-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              fileName: fileName,
+              base64Data: base64Data
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
+
+          setFormData(prev => ({
+            ...prev,
+            image_file: fileName
+          }));
+        } catch (error) {
+          console.error('Error saving image:', error);
+          alert('Failed to save image. Please try again.');
+        }
+      };
+    } catch (error) {
+      console.error('Error reading image:', error);
+      alert('Failed to read image. Please try again.');
+    }
   };
 
   return (
@@ -420,6 +462,9 @@ Avoid title case for categories unless in menus or subheads` },
                         }
                         if (formData.pdf_file) {
                           optionalFieldsInfo.push(`PDF File: Attached`);
+                        }
+                        if (formData.image_file) {
+                          optionalFieldsInfo.push(`Image File: Attached`);
                         }
 
                         // If there are optional fields and this is the first message, add them as a system message
@@ -693,7 +738,13 @@ Avoid title case for categories unless in menus or subheads` },
                               const scrollPosition = window.scrollY;
 
                               setPostResponse({ postBody, postCTA, postHeadline, horizonId });
-                              if (imageUrl) {
+                              
+                              // If user uploaded an image, use that instead of the generated image
+                              if (formData.image_file) {
+                                const uploadedImageUrl = `https://brand-agent-server.up.railway.app/uploads/${formData.image_file}`;
+                                setPostImage(uploadedImageUrl);
+                              } else if (imageUrl) {
+                                // Otherwise use the generated image if available
                                 setPostImage(imageUrl);
                               }
 
