@@ -4,6 +4,7 @@ import './FacebookSandbox.css';
 
 function FacebookSandbox() {
   // State declarations
+  const [showAllImages, setShowAllImages] = useState(false);
   const [formData, setFormData] = useState({
     post_prompt: '',
     brand_guidelines: '',
@@ -544,6 +545,8 @@ Avoid title case for categories unless in menus or subheads` },
                           let postHeadline = '';
                           let horizonId = '';
                           let imageUrl = '';
+                          let webScrape = null;
+                          let webscrapeImages = [];
 
                           try {
                             // Handle the raw_response array structure
@@ -553,10 +556,58 @@ Avoid title case for categories unless in menus or subheads` },
                                 item.value?.output?.facebook_ad
                               );
 
+                              // Look for structured facebook_ad data
+                              const structuredFacebookAdItem = data.raw_response.find(item =>
+                                item.value?.isStructured === true && item.value?.label === 'facebook_ad'
+                              );
+
+                              // Look for facebook_ad chunks
+                              let facebookAdBody = '';
+                              let facebookAdCTA = '';
+                              let facebookAdHeadline = '';
+
+                              if (structuredFacebookAdItem) {
+                                // Find all chunks with type 'chunk' that contain facebook_ad data
+                                const chunks = data.raw_response.filter(item =>
+                                  item.type === 'chunk' && item.value?.type === 'chunk' && item.value?.value
+                                );
+
+                                // Reconstruct the JSON from chunks
+                                let jsonStr = '';
+                                chunks.forEach(chunk => {
+                                  if (chunk.value?.value) {
+                                    jsonStr += chunk.value.value;
+                                  }
+                                });
+
+                                // Try to parse the reconstructed JSON
+                                try {
+                                  if (jsonStr) {
+                                    const parsedJson = JSON.parse(jsonStr);
+                                    if (parsedJson.facebook_ad_body) {
+                                      facebookAdBody = parsedJson.facebook_ad_body;
+                                    }
+                                    if (parsedJson.facebook_ad_call_to_action) {
+                                      facebookAdCTA = parsedJson.facebook_ad_call_to_action;
+                                    }
+                                    if (parsedJson.facebook_ad_headline) {
+                                      facebookAdHeadline = parsedJson.facebook_ad_headline;
+                                    }
+                                  }
+                                } catch (e) {
+                                  console.error('Error parsing JSON from chunks:', e);
+                                }
+                              }
+
                               if (outputItem) {
                                 postBody = outputItem.value.output.facebook_ad.facebook_ad_body || '';
                                 postCTA = outputItem.value.output.facebook_ad.facebook_ad_call_to_action || '';
                                 postHeadline = outputItem.value.output.facebook_ad.facebook_ad_headline || '';
+                              } else if (facebookAdBody || facebookAdCTA || facebookAdHeadline) {
+                                // Use the reconstructed data from chunks
+                                postBody = facebookAdBody;
+                                postCTA = facebookAdCTA;
+                                postHeadline = facebookAdHeadline;
 
                                 // Extract horizon-id if available
                                 if (outputItem.value.output['horizon-id']) {
@@ -724,7 +775,74 @@ Avoid title case for categories unless in menus or subheads` },
                               }
                             }
 
-                            console.log('Extracted Post Data:', { postBody, postCTA, postHeadline, horizonId, imageUrl });
+                            // Extract webscrape data from the response
+                            const webscrapeItem = data.raw_response.find(item =>
+                              item.type === 'chunk' &&
+                              item.value?.label === 'Webscrape' &&
+                              item.value?.output
+                            );
+
+                            if (webscrapeItem) {
+                              webScrape = webscrapeItem.value.output;
+                            } else {
+                              // Try alternative path for webscrape data
+                              const toolItem = data.raw_response.find(item =>
+                                item.value?.id?.startsWith('tool_') &&
+                                item.value?.label === 'Webscrape'
+                              );
+
+                              if (toolItem) {
+                                webScrape = toolItem.value.output;
+                              } else {
+                                // Look for tool with specific ID format from the sample response
+                                const specificToolItem = data.raw_response.find(item =>
+                                  item.value?.id &&
+                                  typeof item.value.id === 'string' &&
+                                  item.value?.output
+                                );
+
+                                if (specificToolItem) {
+                                  webScrape = specificToolItem.value.output;
+                                }
+                              }
+                            }
+
+                            // Extract image URLs from webscrape content if available
+                            if (webScrape) {
+                              // Look for image URLs in the content
+                              const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg))/gi;
+                              const matches = webScrape.match(urlRegex);
+
+                              if (matches) {
+                                webscrapeImages = [...new Set(matches)]; // Remove duplicates
+                              }
+                            }
+
+                            console.log('Extracted Post Data:', { postBody, postCTA, postHeadline, horizonId, imageUrl, webScrape });
+
+                            // If we still don't have post data, try to extract it from the raw response
+                            if (!postBody && !postCTA && !postHeadline) {
+                              // Try to extract from the raw response as a last resort
+                              const rawResponseStr = JSON.stringify(data.raw_response);
+
+                              // Look for facebook_ad_body pattern
+                              const bodyMatch = rawResponseStr.match(/facebook_ad_body["']?\s*:\s*["']([^"']+)["']/i);
+                              if (bodyMatch && bodyMatch[1]) {
+                                postBody = bodyMatch[1];
+                              }
+
+                              // Look for facebook_ad_call_to_action pattern
+                              const ctaMatch = rawResponseStr.match(/facebook_ad_call_to_action["']?\s*:\s*["']([^"']+)["']/i);
+                              if (ctaMatch && ctaMatch[1]) {
+                                postCTA = ctaMatch[1];
+                              }
+
+                              // Look for facebook_ad_headline pattern
+                              const headlineMatch = rawResponseStr.match(/facebook_ad_headline["']?\s*:\s*["']([^"']+)["']/i);
+                              if (headlineMatch && headlineMatch[1]) {
+                                postHeadline = headlineMatch[1];
+                              }
+                            }
 
                             if (!postBody && !postCTA) {
                               console.warn('No post data found in response, showing raw response');
@@ -737,8 +855,8 @@ Avoid title case for categories unless in menus or subheads` },
                               // Save current scroll position before updating post response
                               const scrollPosition = window.scrollY;
 
-                              setPostResponse({ postBody, postCTA, postHeadline, horizonId });
-                              
+                              setPostResponse({ postBody, postCTA, postHeadline, horizonId, webScrape, webscrapeImages });
+
                               // If user uploaded an image, use that instead of the generated image
                               if (formData.image_file) {
                                 const uploadedImageUrl = `https://brand-agent-server.up.railway.app/uploads/${formData.image_file}`;
@@ -915,8 +1033,65 @@ Avoid title case for categories unless in menus or subheads` },
           </Card>
         </Col>
 
-        <Col md={6}>
+        <Col md={6} >
           <div className="d-flex flex-column h-100">
+            {postResponse && postResponse.webScrape && postResponse.webscrapeImages.length > 0 && (
+              <Card style={{ marginBottom: '20px', padding: '0px 0px 80px 0px'}}>
+                <Card.Header as="h5" className="bg-white">Article Images</Card.Header>
+                <Card.Body>
+                  <div className="webscrape-images-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    {(showAllImages ? postResponse.webscrapeImages : postResponse.webscrapeImages.slice(0, 3)).map((imageUrl, index) => (
+                      <div key={index} className="webscrape-image-item" style={{ maxWidth: '100px', maxHeight: '100px', overflow: 'hidden' }}>
+                        <img
+                          src={imageUrl}
+                          alt={`Article image ${index + 1}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                          onClick={() => {
+                            // Set this image as the post image when clicked
+                            setPostImage(imageUrl);
+                          }}
+                        />
+                      </div>
+                    ))}
+                    {!showAllImages && postResponse.webscrapeImages.length > 3 && (
+                      <div
+                        className="more-images-indicator"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '100px',
+                          height: '100px',
+                          backgroundColor: '#e9ecef',
+                          color: '#6c757d',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setShowAllImages(true)}
+                      >
+                        +{postResponse.webscrapeImages.length - 3} more
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2 d-flex justify-content-between align-items-center">
+                    <small className="text-muted">Click an image to use it in the post</small>
+                    {showAllImages && postResponse.webscrapeImages.length > 3 && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0"
+                        onClick={() => setShowAllImages(false)}
+                      >
+                        Show less
+                      </Button>
+                    )}
+                  </div>
+
+                </Card.Body>
+              </Card>
+            )}
+
+
+
             <Card className="h-100">
               <Card.Header as="h5" className="bg-white">Canvas</Card.Header>
               <Card.Body className="d-flex flex-column">
@@ -977,11 +1152,11 @@ Avoid title case for categories unless in menus or subheads` },
                           <p className="facebook-post-link-description">The perfect solution for your creative needs...</p>
                         </div>
                         <div className='facebook-cta-side'>
-                        {postResponse.postCTA && (
-                          <div className="facebook-post-cta-container">
-                            <div className="facebook-post-cta-button">{postResponse.postCTA}</div>
-                          </div>
-                        )}
+                          {postResponse.postCTA && (
+                            <div className="facebook-post-cta-container">
+                              <div className="facebook-post-cta-button">{postResponse.postCTA}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -990,13 +1165,13 @@ Avoid title case for categories unless in menus or subheads` },
                       <div className="facebook-post-reactions">
                         <div className="facebook-reaction-icons">
                           <div className="facebook-reaction-icon facebook-like-icon">
-                            <img alt="" aria-hidden="true" src="https://scontent.fblr1-4.fna.fbcdn.net/m1/v/t6/An9ppfYBDKOHySoEIIVWswgYTzPFNtk9dqtI7KydyS4oTjw475tganeRf9eW53-mQO7kn8WZonsAuuOYmzghmj0W4UVfLDVZ4Hg8Bfid1XVsutgXifIyBFftXKeKzJM.png?_nc_gid=XGSbevF3zzqwQRaxiOmMaw&amp;_nc_oc=Adk2kx06me12HCdbf5tMWCR6pacaGe0Y407-Vld_SzI0yvGSXIq5uinFlPR_Y1jEHYo&amp;ccb=10-5&amp;oh=00_AfM2hRL7mSLkAg5PKfjjVu7UEBgaNaVyPibd-N3SwX5eCQ&amp;oe=68698894&amp;_nc_sid=7da55a" style={{height: '20px', width: '20px'}} />
+                            <img alt="" aria-hidden="true" src="https://scontent.fblr1-4.fna.fbcdn.net/m1/v/t6/An9ppfYBDKOHySoEIIVWswgYTzPFNtk9dqtI7KydyS4oTjw475tganeRf9eW53-mQO7kn8WZonsAuuOYmzghmj0W4UVfLDVZ4Hg8Bfid1XVsutgXifIyBFftXKeKzJM.png?_nc_gid=XGSbevF3zzqwQRaxiOmMaw&amp;_nc_oc=Adk2kx06me12HCdbf5tMWCR6pacaGe0Y407-Vld_SzI0yvGSXIq5uinFlPR_Y1jEHYo&amp;ccb=10-5&amp;oh=00_AfM2hRL7mSLkAg5PKfjjVu7UEBgaNaVyPibd-N3SwX5eCQ&amp;oe=68698894&amp;_nc_sid=7da55a" style={{ height: '20px', width: '20px' }} />
                           </div>
                           <div className="facebook-reaction-icon facebook-celebrate-icon">
-                            <img alt="" aria-hidden="true" src="https://scontent.fblr1-4.fna.fbcdn.net/m1/v/t6/An8ol7kIZjMV7CcisBzQzWXjV7tdAtVeAzWRqDNxnfxaNBOEHrwwK2vfGcViTJvANPxr-pipwc7bVclHNRIvWiIe987NOzZLdYrreoLm2EHk_iX7nO0i9uudsA9IgAg.png?_nc_gid=XGSbevF3zzqwQRaxiOmMaw&amp;_nc_oc=Adn3nr95Tp3aORC-Iqz8255oDpyGi764cR38tC2uDBEFEGngglLSVoVzxpiPtndOCcg&amp;ccb=10-5&amp;oh=00_AfOzE8PSpU0CAOOgIfcHljfYOp6mF6F_q8wS5YzW0PW0nQ&amp;oe=6869817C&amp;_nc_sid=7da55a" style={{height: '20px', width: '20px'}} />
+                            <img alt="" aria-hidden="true" src="https://scontent.fblr1-4.fna.fbcdn.net/m1/v/t6/An8ol7kIZjMV7CcisBzQzWXjV7tdAtVeAzWRqDNxnfxaNBOEHrwwK2vfGcViTJvANPxr-pipwc7bVclHNRIvWiIe987NOzZLdYrreoLm2EHk_iX7nO0i9uudsA9IgAg.png?_nc_gid=XGSbevF3zzqwQRaxiOmMaw&amp;_nc_oc=Adn3nr95Tp3aORC-Iqz8255oDpyGi764cR38tC2uDBEFEGngglLSVoVzxpiPtndOCcg&amp;ccb=10-5&amp;oh=00_AfOzE8PSpU0CAOOgIfcHljfYOp6mF6F_q8wS5YzW0PW0nQ&amp;oe=6869817C&amp;_nc_sid=7da55a" style={{ height: '20px', width: '20px' }} />
                           </div>
                           <div className="facebook-reaction-icon facebook-support-icon">
-                            <img alt="" aria-hidden="true" src="https://scontent.fblr1-4.fna.fbcdn.net/m1/v/t6/An9zEAi7yffnC80jyexeki2Ozr_sj0G6lmu7mzq6ZLHqvy-9B_Lbx9DC5z-wGrTUW9WIaCTZjMknmAHVJa0PvUwlGwXrq2L2oJRYpFe7-yAbB1SHmYcKF8-s20xbjQ.png?_nc_gid=XGSbevF3zzqwQRaxiOmMaw&amp;_nc_oc=AdlbNHDH5HORN100SJpGz90vXKFNE73y9RYO6doseunDEDaJ2iu6563xEe00IgueP00&amp;ccb=10-5&amp;oh=00_AfO3vv_nftWCp56s5GhkEY2iizZs_zQd3L6E35Xf0ygQ5A&amp;oe=686978D4&amp;_nc_sid=7da55a" style={{height: '20px', width: '20px'}} />
+                            <img alt="" aria-hidden="true" src="https://scontent.fblr1-4.fna.fbcdn.net/m1/v/t6/An9zEAi7yffnC80jyexeki2Ozr_sj0G6lmu7mzq6ZLHqvy-9B_Lbx9DC5z-wGrTUW9WIaCTZjMknmAHVJa0PvUwlGwXrq2L2oJRYpFe7-yAbB1SHmYcKF8-s20xbjQ.png?_nc_gid=XGSbevF3zzqwQRaxiOmMaw&amp;_nc_oc=AdlbNHDH5HORN100SJpGz90vXKFNE73y9RYO6doseunDEDaJ2iu6563xEe00IgueP00&amp;ccb=10-5&amp;oh=00_AfO3vv_nftWCp56s5GhkEY2iizZs_zQd3L6E35Xf0ygQ5A&amp;oe=686978D4&amp;_nc_sid=7da55a" style={{ height: '20px', width: '20px' }} />
                           </div>
                         </div>
                         <span style={{ marginLeft: '3px' }}>142</span>
