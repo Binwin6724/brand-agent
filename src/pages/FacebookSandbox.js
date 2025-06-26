@@ -656,8 +656,80 @@ Avoid title case for categories unless in menus or subheads` },
                           let webscrapeImages = [];
 
                           try {
-                            // Handle the raw_response array structure
-                            if (data.raw_response && Array.isArray(data.raw_response)) {
+                            // NEW FORMAT: Check for parsed_response format first
+                            if (data.parsed_response) {
+                              console.log('Found new parsed_response format, using direct extraction');
+                              
+                              // Extract data from the new parsed_response format
+                              postBody = data.parsed_response.facebookAdBody || '';
+                              postCTA = data.parsed_response.facebookAdCTA || '';
+                              postHeadline = data.parsed_response.facebookHeadline || '';
+                              imageUrl = data.parsed_response.generatedImage || '';
+                              
+                              // Update horizonId if it exists in parsed_response
+                              if (data.parsed_response.horizonId) {
+                                horizonId = data.parsed_response.horizonId;
+                                console.log('Using horizonId from parsed_response:', horizonId);
+                                
+                                // Immediately update formData with the horizon ID
+                                setFormData(prevFormData => {
+                                  console.log('Immediately updating formData with horizonId:', horizonId);
+                                  return {
+                                    ...prevFormData,
+                                    horizon_id: horizonId
+                                  };
+                                });
+                              }
+                              
+                              // Extract webscrape data if available
+                              if (data.parsed_response.webscrapeData) {
+                                webScrape = data.parsed_response.webscrapeData;
+                                console.log('Found webscrape data in parsed_response');
+                                
+                                // Extract webscrape images from webscrapeData if available
+                                // First check if webscrapeImages field exists
+                                if (data.parsed_response.webscrapeImages && Array.isArray(data.parsed_response.webscrapeImages)) {
+                                  webscrapeImages = data.parsed_response.webscrapeImages;
+                                  console.log('Found webscrape images in parsed_response.webscrapeImages:', webscrapeImages);
+                                } 
+                                // If not, try to extract images from the webscrapeData field
+                                else if (typeof webScrape === 'string') {
+                                  // Try to extract image URLs from the webscrapeData using regex
+                                  const imgRegex = /https?:\/\/[^\s"']+\.(jpg|jpeg|png|gif|webp)/gi;
+                                  const matches = webScrape.match(imgRegex) || [];
+                                  if (matches.length > 0) {
+                                    // Clean up URLs by removing any trailing punctuation
+                                    const cleanedMatches = matches.map(url => {
+                                      // Remove trailing punctuation like parentheses, commas, periods, etc.
+                                      return url.replace(/[\)\]\}\.,;:!]$/, '');
+                                    });
+                                    webscrapeImages = [...new Set(cleanedMatches)]; // Remove duplicates
+                                    console.log('Extracted webscrape images from webscrapeData:', webscrapeImages);
+                                  }
+                                }
+                              }
+                              
+                              console.log('Extracted from parsed_response:', {
+                                postBody, 
+                                postCTA, 
+                                postHeadline, 
+                                imageUrl, 
+                                horizonId,
+                                webScrape,
+                                webscrapeImages
+                              });
+                              
+                              // Skip the rest of the parsing logic if we have valid data from parsed_response
+                              if (postBody && postCTA && postHeadline) {
+                                console.log('Successfully extracted all required data from parsed_response, skipping other parsing methods');
+                                // Jump to the end of the try block
+                                // We'll still set the postResponse state with this data
+                              } else {
+                                console.log('Missing some data from parsed_response, will try other parsing methods as fallback');
+                              }
+                            }
+                            // Fall back to raw_response parsing if needed
+                            else if (data.raw_response && Array.isArray(data.raw_response)) {
                               // First, try to find facebook_ad in output
                               const outputItem = data.raw_response.find(item =>
                                 item.value?.output?.facebook_ad
@@ -810,11 +882,14 @@ Avoid title case for categories unless in menus or subheads` },
                                 const rootItem = data.raw_response.find(item =>
                                   item.value?.id === 'ROOT' && item.value?.output
                                 );
+                                
+                                console.log('Found ROOT item with output:', rootItem?.value?.output);
 
                                 if (rootItem?.value?.output?.facebook_ad) {
                                   postBody = rootItem.value.output.facebook_ad.facebook_ad_body || '';
                                   postCTA = rootItem.value.output.facebook_ad.facebook_ad_call_to_action || '';
                                   postHeadline = rootItem.value.output.facebook_ad.facebook_ad_headline || '';
+                                  console.log('Extracted from ROOT output facebook_ad:', { postBody, postCTA, postHeadline });
 
                                   // Extract horizon-id if available
                                   if (rootItem.value.output['horizon-id']) {
@@ -891,7 +966,8 @@ Avoid title case for categories unless in menus or subheads` },
                             const imageItem = data.raw_response.find(item =>
                               item.value?.output?.['Generate Post Image Ad Body']?.output?.image_url ||
                               item.value?.output?.['Image generation']?.output?.image_url ||
-                              item.value?.['tool_hjXMwmOsZWOfNZ6X']?.output?.image_url
+                              item.value?.['tool_hjXMwmOsZWOfNZ6X']?.output?.image_url ||
+                              (item.value?.id?.startsWith('tool_') && item.value?.label === 'Image generation' && item.value?.output?.image_url)
                             );
 
                             if (imageItem) {
@@ -901,6 +977,8 @@ Avoid title case for categories unless in menus or subheads` },
                                 imageUrl = imageItem.value.output['Image generation'].output.image_url;
                               } else if (imageItem.value?.['tool_hjXMwmOsZWOfNZ6X']?.output?.image_url) {
                                 imageUrl = imageItem.value['tool_hjXMwmOsZWOfNZ6X'].output.image_url;
+                              } else if (imageItem.value?.id?.startsWith('tool_') && imageItem.value?.label === 'Image generation' && imageItem.value?.output?.image_url) {
+                                imageUrl = imageItem.value.output.image_url;
                               }
                             }
 
@@ -913,6 +991,14 @@ Avoid title case for categories unless in menus or subheads` },
                                 imageUrl = rootItem.value.output['Image generation'].output.image_url;
                               } else if (rootItem?.value?.output?.['tool_hjXMwmOsZWOfNZ6X']?.output?.image_url) {
                                 imageUrl = rootItem.value.output['tool_hjXMwmOsZWOfNZ6X'].output.image_url;
+                              } else {
+                                // Look for any tool ID with image_url in output
+                                for (const key in rootItem?.value?.output || {}) {
+                                  if (key.startsWith('tool_') && rootItem.value.output[key]?.output?.image_url) {
+                                    imageUrl = rootItem.value.output[key].output.image_url;
+                                    break;
+                                  }
+                                }
                               }
                             }
 
@@ -963,28 +1049,211 @@ Avoid title case for categories unless in menus or subheads` },
 
                             // If we still don't have post data, try to extract it from the raw response
                             if (!postBody && !postCTA && !postHeadline) {
-                              // Try to extract from the raw response as a last resort
-                              const rawResponseStr = JSON.stringify(data.raw_response);
-
-                              // Look for facebook_ad_body pattern
-                              const bodyMatch = rawResponseStr.match(/facebook_ad_body["']?\s*:\s*["']([^"']+)["']/i);
-                              if (bodyMatch && bodyMatch[1]) {
-                                postBody = bodyMatch[1];
+                              console.log('Using fallback extraction method');
+                              
+                              // Try to find in values output
+                              const valuesOutput = data.raw_response.find(item => 
+                                item.value?.type === 'outputs' && 
+                                item.value?.values?.facebook_ad
+                              );
+                              
+                              if (valuesOutput?.value?.values?.facebook_ad) {
+                                const fbAd = valuesOutput.value.values.facebook_ad;
+                                postBody = fbAd.facebook_ad_body || '';
+                                postCTA = fbAd.facebook_ad_call_to_action || '';
+                                postHeadline = fbAd.facebook_ad_headline || '';
+                                console.log('Extracted from values output:', { postBody, postCTA, postHeadline });
                               }
-
-                              // Look for facebook_ad_call_to_action pattern
-                              const ctaMatch = rawResponseStr.match(/facebook_ad_call_to_action["']?\s*:\s*["']([^"']+)["']/i);
-                              if (ctaMatch && ctaMatch[1]) {
-                                postCTA = ctaMatch[1];
+                              
+                              // Try to find in the last chunk with type=outputs
+                              if (!postBody && !postCTA && !postHeadline) {
+                                // Look specifically for the last chunk which often contains the complete data
+                                for (let i = data.raw_response.length - 1; i >= 0; i--) {
+                                  const item = data.raw_response[i];
+                                  if (item.value?.type === 'outputs' && item.value?.values?.facebook_ad) {
+                                    const fbAd = item.value.values.facebook_ad;
+                                    postBody = fbAd.facebook_ad_body || '';
+                                    postCTA = fbAd.facebook_ad_call_to_action || '';
+                                    postHeadline = fbAd.facebook_ad_headline || '';
+                                    console.log('Extracted from last outputs chunk:', { postBody, postCTA, postHeadline });
+                                    break;
+                                  }
+                                }
                               }
-
-                              // Look for facebook_ad_headline pattern
-                              const headlineMatch = rawResponseStr.match(/facebook_ad_headline["']?\s*:\s*["']([^"']+)["']/i);
-                              if (headlineMatch && headlineMatch[1]) {
-                                postHeadline = headlineMatch[1];
+                              
+                              // If still no data, try to extract from the raw response as a last resort
+                              if (!postBody && !postCTA && !postHeadline) {
+                                const rawResponseStr = JSON.stringify(data.raw_response);
+                                
+                                // Look for facebook_ad_body pattern with improved regex that can handle multi-line content
+                                const bodyMatch = rawResponseStr.match(/facebook_ad_body["']?\s*:\s*["']([^"']+)["']/i) || 
+                                                  rawResponseStr.match(/facebook_ad_body["']?\s*:\s*["'](.*?)["']/i);
+                                if (bodyMatch && bodyMatch[1]) {
+                                  postBody = bodyMatch[1].replace(/\\n/g, '\n').replace(/\\r/g, '');
+                                  console.log('Extracted body with regex:', postBody);
+                                }
+                                
+                                // Look for facebook_ad_call_to_action pattern with improved regex
+                                const ctaMatch = rawResponseStr.match(/facebook_ad_call_to_action["']?\s*:\s*["']([^"']+)["']/i) ||
+                                                 rawResponseStr.match(/facebook_ad_call_to_action["']?\s*:\s*["'](.*?)["']/i);
+                                if (ctaMatch && ctaMatch[1]) {
+                                  postCTA = ctaMatch[1].replace(/\\n/g, '\n').replace(/\\r/g, '');
+                                  console.log('Extracted CTA with regex:', postCTA);
+                                }
+                                
+                                // Look for facebook_ad_headline pattern with improved regex
+                                const headlineMatch = rawResponseStr.match(/facebook_ad_headline["']?\s*:\s*["']([^"']+)["']/i) ||
+                                                     rawResponseStr.match(/facebook_ad_headline["']?\s*:\s*["'](.*?)["']/i);
+                                if (headlineMatch && headlineMatch[1]) {
+                                  postHeadline = headlineMatch[1].replace(/\\n/g, '\n').replace(/\\r/g, '');
+                                  console.log('Extracted headline with regex:', postHeadline);
+                                }
                               }
                             }
 
+                            // EMERGENCY FIX: Directly parse the response without any complex logic
+                            // Log the entire raw_response for debugging
+                            console.log('EMERGENCY FIX: Raw response structure:', JSON.stringify(data, null, 2));
+                            
+                            try {
+                              if (data.raw_response && Array.isArray(data.raw_response)) {
+                                // Log the number of items in the response
+                                console.log(`EMERGENCY FIX: Response has ${data.raw_response.length} items`);
+                                
+                                // APPROACH 1: Direct access to the last item which is the outputs chunk
+                                const lastItem = data.raw_response[data.raw_response.length - 1];
+                                console.log('EMERGENCY FIX: Last item type:', lastItem.type);
+                                console.log('EMERGENCY FIX: Last item value type:', lastItem.value?.type);
+                                
+                                if (lastItem && lastItem.type === 'chunk' && lastItem.value?.type === 'outputs') {
+                                  console.log('EMERGENCY FIX: Found outputs chunk as last item');
+                                  
+                                  // Check if facebook_ad exists in values
+                                  if (lastItem.value.values && lastItem.value.values.facebook_ad) {
+                                    console.log('EMERGENCY FIX: Found facebook_ad in outputs values');
+                                    const fbAd = lastItem.value.values.facebook_ad;
+                                    postBody = fbAd.facebook_ad_body || '';
+                                    postCTA = fbAd.facebook_ad_call_to_action || '';
+                                    postHeadline = fbAd.facebook_ad_headline || '';
+                                    console.log('EMERGENCY FIX: Extracted from outputs chunk:', { postBody, postCTA, postHeadline });
+                                    
+                                    // Look for image URL in any tool
+                                    for (const key in lastItem.value.values) {
+                                      if (lastItem.value.values[key]?.output?.image_url) {
+                                        imageUrl = lastItem.value.values[key].output.image_url;
+                                        console.log('EMERGENCY FIX: Found image URL in outputs values:', imageUrl);
+                                        break;
+                                      }
+                                    }
+                                  }
+                                }
+                                
+                                // APPROACH 2: Look for ROOT item with output
+                                if (!postBody || !postCTA || !postHeadline) {
+                                  console.log('EMERGENCY FIX: Trying ROOT approach');
+                                  
+                                  // Find the ROOT item with complete output
+                                  for (let i = 0; i < data.raw_response.length; i++) {
+                                    const item = data.raw_response[i];
+                                    if (item.type === 'chunk' && item.value?.id === 'ROOT' && item.value?.output) {
+                                      console.log(`EMERGENCY FIX: Found ROOT item at index ${i}`);
+                                      
+                                      // Check if facebook_ad exists in output
+                                      if (item.value.output.facebook_ad) {
+                                        console.log('EMERGENCY FIX: Found facebook_ad in ROOT output');
+                                        const fbAd = item.value.output.facebook_ad;
+                                        postBody = fbAd.facebook_ad_body || '';
+                                        postCTA = fbAd.facebook_ad_call_to_action || '';
+                                        postHeadline = fbAd.facebook_ad_headline || '';
+                                        console.log('EMERGENCY FIX: Extracted from ROOT output:', { postBody, postCTA, postHeadline });
+                                        
+                                        // Look for image URL in any tool
+                                        for (const key in item.value.output) {
+                                          if (key.startsWith('tool_') && item.value.output[key]?.output?.image_url) {
+                                            imageUrl = item.value.output[key].output.image_url;
+                                            console.log('EMERGENCY FIX: Found image URL in ROOT output:', imageUrl);
+                                            break;
+                                          }
+                                        }
+                                        
+                                        break;
+                                      }
+                                    }
+                                  }
+                                }
+                                
+                                // APPROACH 3: Look for structured chunks with facebook_ad
+                                if (!postBody || !postCTA || !postHeadline) {
+                                  console.log('EMERGENCY FIX: Trying structured chunks approach');
+                                  
+                                  // Find chunks with facebook_ad label
+                                  const fbAdChunks = data.raw_response.filter(item => 
+                                    item.type === 'chunk' && 
+                                    item.value?.isStructured && 
+                                    item.value?.label === 'facebook_ad'
+                                  );
+                                  
+                                  if (fbAdChunks.length > 0) {
+                                    console.log(`EMERGENCY FIX: Found ${fbAdChunks.length} facebook_ad chunks`);
+                                    
+                                    // Look for chunks with facebook_ad content
+                                    for (let i = 0; i < data.raw_response.length; i++) {
+                                      const item = data.raw_response[i];
+                                      if (item.type === 'chunk' && item.value?.type === 'chunk' && 
+                                          typeof item.value.value === 'string' && 
+                                          item.value.value.includes('facebook_ad_body')) {
+                                        
+                                        console.log(`EMERGENCY FIX: Found chunk with facebook_ad_body at index ${i}`);
+                                        console.log('EMERGENCY FIX: Chunk value:', item.value.value);
+                                        
+                                        // Try to parse the JSON string
+                                        try {
+                                          // Combine multiple chunks to form complete JSON
+                                          let jsonStr = '';
+                                          for (let j = i; j < data.raw_response.length; j++) {
+                                            const nextItem = data.raw_response[j];
+                                            if (nextItem.type === 'chunk' && nextItem.value?.type === 'chunk' && 
+                                                typeof nextItem.value.value === 'string') {
+                                              jsonStr += nextItem.value.value;
+                                              if (nextItem.value.value.includes('}')) {
+                                                break;
+                                              }
+                                            }
+                                          }
+                                          
+                                          console.log('EMERGENCY FIX: Combined JSON string:', jsonStr);
+                                          
+                                          // Parse the JSON string
+                                          if (jsonStr) {
+                                            const fbAdObj = JSON.parse(jsonStr);
+                                            postBody = fbAdObj.facebook_ad_body || '';
+                                            postCTA = fbAdObj.facebook_ad_call_to_action || '';
+                                            postHeadline = fbAdObj.facebook_ad_headline || '';
+                                            console.log('EMERGENCY FIX: Extracted from JSON string:', { postBody, postCTA, postHeadline });
+                                          }
+                                        } catch (jsonError) {
+                                          console.error('EMERGENCY FIX: Error parsing JSON string:', jsonError);
+                                        }
+                                        
+                                        break;
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                              
+                              // Log final extracted data
+                              console.log('EMERGENCY FIX: Final extracted data:', { 
+                                postBody: postBody || 'NOT FOUND', 
+                                postCTA: postCTA || 'NOT FOUND', 
+                                postHeadline: postHeadline || 'NOT FOUND',
+                                imageUrl: imageUrl || 'NOT FOUND',
+                                horizonId: horizonId || 'NOT FOUND'
+                              });
+                            } catch (parseError) {
+                              console.error('EMERGENCY FIX: Error during parsing:', parseError);
+                            }
+                            
                             if (!postBody && !postCTA) {
                               console.warn('No post data found in response, showing raw response');
                               setPostResponse({
@@ -1061,19 +1330,91 @@ Avoid title case for categories unless in menus or subheads` },
                             }
                           } catch (error) {
                             console.error('Error parsing response:', error);
-                            // Save current scroll position before updating post response
-                            const scrollPosition = window.scrollY;
+                            
+                            // Check if we have valid data from parsed_response before showing error
+                            if (data.parsed_response && 
+                                data.parsed_response.facebookAdBody && 
+                                data.parsed_response.facebookAdCTA && 
+                                data.parsed_response.facebookHeadline) {
+                              
+                              console.log('Despite error, we have valid parsed_response data, using that instead');
+                              
+                              // Extract webscrape images from webscrapeData if needed
+                              let extractedWebscrapeImages = [];
+                              
+                              // First check if webscrapeImages field exists
+                              if (data.parsed_response.webscrapeImages && Array.isArray(data.parsed_response.webscrapeImages)) {
+                                extractedWebscrapeImages = data.parsed_response.webscrapeImages;
+                                console.log('Using webscrape images from parsed_response.webscrapeImages:', extractedWebscrapeImages);
+                              } 
+                              // If not, try to extract images from the webscrapeData field
+                              else if (data.parsed_response.webscrapeData && typeof data.parsed_response.webscrapeData === 'string') {
+                                // Try to extract image URLs from the webscrapeData using regex
+                                const imgRegex = /https?:\/\/[^\s"']+\.(jpg|jpeg|png|gif|webp)/gi;
+                                const matches = data.parsed_response.webscrapeData.match(imgRegex) || [];
+                                if (matches.length > 0) {
+                                  // Clean up URLs by removing any trailing punctuation
+                                  const cleanedMatches = matches.map(url => {
+                                    // Remove trailing punctuation like parentheses, commas, periods, etc.
+                                    return url.replace(/[\)\]\}\.,;:!]$/, '');
+                                  });
+                                  extractedWebscrapeImages = [...new Set(cleanedMatches)]; // Remove duplicates
+                                  console.log('Extracted webscrape images from webscrapeData:', extractedWebscrapeImages);
+                                }
+                              }
+                              
+                              // Extract horizonId if available
+                              const extractedHorizonId = data.parsed_response.horizonId || '';
+                              
+                              // Immediately update formData with the horizon ID if available
+                              if (extractedHorizonId) {
+                                console.log('Immediately updating formData with horizonId from error handler:', extractedHorizonId);
+                                setFormData(prevFormData => ({
+                                  ...prevFormData,
+                                  horizon_id: extractedHorizonId
+                                }));
+                              }
+                              
+                              // Create a valid post response from parsed_response
+                              const validPostResponse = {
+                                postBody: data.parsed_response.facebookAdBody,
+                                postCTA: data.parsed_response.facebookAdCTA,
+                                postHeadline: data.parsed_response.facebookHeadline,
+                                horizonId: extractedHorizonId,
+                                webScrape: data.parsed_response.webscrapeData || null,
+                                webscrapeImages: extractedWebscrapeImages
+                              };
+                              
+                              // Set the valid post response
+                              setPostResponse(validPostResponse);
+                              
+                              // Set image if available
+                              if (data.parsed_response.generatedImage) {
+                                setPostImage(data.parsed_response.generatedImage);
+                              }
+                              
+                              // Save current scroll position
+                              const scrollPosition = window.scrollY;
+                              
+                              // Restore scroll position after state update
+                              setTimeout(() => {
+                                window.scrollTo(0, scrollPosition);
+                              }, 0);
+                            } else {
+                              // Save current scroll position before updating post response
+                              const scrollPosition = window.scrollY;
 
-                            setPostResponse({
-                              postBody: 'Error parsing response. Raw data:',
-                              postCTA: JSON.stringify(data, null, 2),
-                              postHeadline: ''
-                            });
+                              setPostResponse({
+                                postBody: 'Error parsing response. Raw data:',
+                                postCTA: JSON.stringify(data, null, 2),
+                                postHeadline: ''
+                              });
 
-                            // Restore scroll position after state update
-                            setTimeout(() => {
-                              window.scrollTo(0, scrollPosition);
-                            }, 0);
+                              // Restore scroll position after state update
+                              setTimeout(() => {
+                                window.scrollTo(0, scrollPosition);
+                              }, 0);
+                            }
                           }
 
                           // Add bot response to chat
@@ -1390,9 +1731,18 @@ Avoid title case for categories unless in menus or subheads` },
                   {console.log('Rendering Horizon ID card, formData:', JSON.stringify(formData, null, 2))}
                   {console.log('Current horizon_id value:', formData.horizon_id)}
                   {console.log('PostResponse full object:', JSON.stringify(postResponse, null, 2))}
-                  {console.log('PostResponse horizonId:', postResponse.horizonId)}
-                  {console.log('Final value being displayed:', formData.horizon_id || postResponse.horizonId || '')}
+                  {console.log('PostResponse horizonId:', postResponse?.horizonId)}
+                  
+                  {/* Calculate the final horizon ID value to display */}
+                  {(() => {
+                    // Get the horizon ID from either formData or postResponse
+                    const displayHorizonId = formData.horizon_id || (postResponse && postResponse.horizonId) || '';
+                    console.log('Final value being displayed:', displayHorizonId);
+                    return null;
+                  })()}
+                  
                   <Form.Group>
+                    <Form.Label><strong>Horizon ID</strong></Form.Label>
                     {/* Force re-render of the input field when horizon ID changes */}
                     <Form.Control
                       key={formData.horizon_id || postResponse?.horizonId || 'empty-horizon-id'}
@@ -1407,7 +1757,7 @@ Avoid title case for categories unless in menus or subheads` },
                         color: '#6c757d',
                         border: '1px solid #dee2e6',
                         borderRadius: '0.25rem',
-                        padding: '0.3rem',
+                        padding: '0.3rem',  
                         fontSize: '1rem',
                         fontWeight: '400',
                         lineHeight: '1.5',
