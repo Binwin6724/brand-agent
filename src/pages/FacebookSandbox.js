@@ -701,7 +701,7 @@ Avoid title case for categories unless in menus or subheads` },
                                     // Clean up URLs by removing any trailing punctuation
                                     const cleanedMatches = matches.map(url => {
                                       // Remove trailing punctuation like parentheses, commas, periods, etc.
-                                      return url.replace(/[\)\]\}\.,;:!]$/, '');
+                                      return url.replace(/[)\]}.,:;!]$/, '');
                                     });
                                     webscrapeImages = [...new Set(cleanedMatches)]; // Remove duplicates
                                     console.log('Extracted webscrape images from webscrapeData:', webscrapeImages);
@@ -1314,12 +1314,19 @@ Avoid title case for categories unless in menus or subheads` },
                                 console.warn('No horizonId found to update formData with');
                               }
 
-                              // If user uploaded an image, use that instead of the generated image
+                              // If user uploaded an image, always use that instead of any generated image
                               if (formData.image_file) {
                                 const uploadedImageUrl = `https://brand-agent-server.up.railway.app/uploads/${formData.image_file}`;
+                                console.log('Using user uploaded image:', uploadedImageUrl);
                                 setPostImage(uploadedImageUrl);
+                                
+                                // Update the newPostResponse to use the uploaded image
+                                if (newPostResponse) {
+                                  newPostResponse.imageUrl = uploadedImageUrl;
+                                }
                               } else if (imageUrl) {
-                                // Otherwise use the generated image if available
+                                // Only use the generated image if no user image was uploaded
+                                console.log('No user image uploaded, using generated image:', imageUrl);
                                 setPostImage(imageUrl);
                               }
 
@@ -1356,7 +1363,7 @@ Avoid title case for categories unless in menus or subheads` },
                                   // Clean up URLs by removing any trailing punctuation
                                   const cleanedMatches = matches.map(url => {
                                     // Remove trailing punctuation like parentheses, commas, periods, etc.
-                                    return url.replace(/[\)\]\}\.,;:!]$/, '');
+                                    return url.replace(/[)\]}.,:;!]$/, '');
                                   });
                                   extractedWebscrapeImages = [...new Set(cleanedMatches)]; // Remove duplicates
                                   console.log('Extracted webscrape images from webscrapeData:', extractedWebscrapeImages);
@@ -1388,8 +1395,18 @@ Avoid title case for categories unless in menus or subheads` },
                               // Set the valid post response
                               setPostResponse(validPostResponse);
                               
-                              // Set image if available
-                              if (data.parsed_response.generatedImage) {
+                              // Handle image setting - prioritize user uploaded images
+                              if (formData.image_file) {
+                                // If user uploaded an image, always use that instead of any generated image
+                                const uploadedImageUrl = `https://brand-agent-server.up.railway.app/uploads/${formData.image_file}`;
+                                console.log('Error handler: Using user uploaded image:', uploadedImageUrl);
+                                setPostImage(uploadedImageUrl);
+                                
+                                // Update the validPostResponse to use the uploaded image
+                                validPostResponse.imageUrl = uploadedImageUrl;
+                              } else if (data.parsed_response.generatedImage) {
+                                // Only use the generated image if no user image was uploaded
+                                console.log('Error handler: No user image uploaded, using generated image:', data.parsed_response.generatedImage);
                                 setPostImage(data.parsed_response.generatedImage);
                               }
                               
