@@ -1649,7 +1649,7 @@ Avoid title case for categories unless in menus or subheads` },
               <Card.Body className="d-flex flex-column">
                 {loading ? (
                   <div className="ai-loader-container">
-                    <div className="ai-loader-text">Generating your content...</div>
+                    <div className="ai-loader-text">Processing...</div>
                     <div className="ai-loader-bars">
                       <div className="ai-loader-bar"></div>
                       <div className="ai-loader-bar"></div>
