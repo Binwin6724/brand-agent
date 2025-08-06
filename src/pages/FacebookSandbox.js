@@ -526,7 +526,7 @@ Avoid title case for categories unless in menus or subheads` },
                             image_path: formData.image_file || '', // Changed from image_file_path to image_path
                             image_upload_bool: !!formData.image_file, // Added image_upload_bool
                             image_generation_bool: false, // Added image_generation_bool, default to false
-                            skip_image_reader: true
+                            skip_image_reader: false
                           };
 
                           console.log('Payload:', payload);
