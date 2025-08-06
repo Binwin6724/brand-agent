@@ -1689,13 +1689,13 @@ Avoid title case for categories unless in menus or subheads` },
                     <div className="facebook-post-content">
                       <p className="facebook-post-body">{postResponse.postBody}</p>
 
-                      {/* {postImage && (
+                       {postImage && (
                         <div className="facebook-post-image-container">
                           <img src={postImage} alt="Facebook post" className="facebook-post-image" />
                         </div>
-                      )} */}
+                      )} 
 
-                      {/* <div className="facebook-post-link-container">
+                       <div className="facebook-post-link-container">
                         <div className='facebook-headline-link'>
                           <div className="facebook-post-link-url">GENSTUDIO.AI/PRODUCTS</div>
                           {postResponse.postHeadline && (
@@ -1710,7 +1710,7 @@ Avoid title case for categories unless in menus or subheads` },
                             </div>
                           )}
                         </div>
-                      </div> */}
+                      </div> 
                     </div>
 
                     <div className="facebook-post-engagement">
