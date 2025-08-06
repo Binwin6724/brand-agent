@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react'
 import Modal from 'react-bootstrap/Modal';
-import ReactMarkdown from 'react-markdown';
 import Card from 'react-bootstrap/Card';
 import CardGroup from 'react-bootstrap/CardGroup';
 import Row from 'react-bootstrap/Row';
