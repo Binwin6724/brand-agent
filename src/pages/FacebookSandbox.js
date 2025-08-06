@@ -104,6 +104,8 @@ Avoid title case for categories unless in menus or subheads` },
   const [initialContextSet, setInitialContextSet] = useState(false);
   const messagesEndRef = useRef(null);
 
+  console.log("postImage", postImage);
+
   // Utility functions
   const scrollToBottom = () => {
     // Only scroll the chat container, not the whole page
