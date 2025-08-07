@@ -1589,7 +1589,7 @@ Avoid title case for categories unless in menus or subheads` },
           <div className="d-flex flex-column">
             {postResponse && postResponse.webScrape && postResponse.webscrapeImages.length > 0 && (
               <Card style={{ marginBottom: '20px', padding: '0px 0px 20px 0px'}}>
-                <Card.Header as="h5" className="bg-white">Article Images</Card.Header>
+                <Card.Header as="h5" className="bg-white">Branded Images</Card.Header>
                 <Card.Body>
                   <div className="webscrape-images-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     {(showAllImages ? postResponse.webscrapeImages : postResponse.webscrapeImages.slice(0, 3)).map((imageUrl, index) => (
