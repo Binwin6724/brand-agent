@@ -1682,7 +1682,6 @@ Avoid title case for categories unless in menus or subheads` },
                         </svg>
                       </div>
                       <div className="facebook-post-user-info">
-                        <div className="facebook-post-user-name">GenStudio AI</div>
                       </div>
                     </div>
 
