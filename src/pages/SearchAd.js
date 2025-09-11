@@ -4,7 +4,7 @@ import Card from 'react-bootstrap/Card';
 import CardGroup from 'react-bootstrap/CardGroup';
 import Row from 'react-bootstrap/Row';
 import Button from 'react-bootstrap/Button';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 import noAsset from '../assets/no.png';
 
 function SearchAd() {
